@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "pypdfmerge"
+version = "0.1.0"
+description = "Merge pdf easily with power of Python."
+authors = ["kurotom <55354389+kurotom@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = 'src'}]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pillow = "<=10"
+pymupdf = "1.22.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+mergepdf = 'src.gui:main'

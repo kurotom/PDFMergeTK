@@ -50,6 +50,13 @@ class Data:
     names = []
     # [ PDFile_objs ]
     selected = []
+    # [ fitz.fitz.Pixmap ]
+    imagesTK = []
+
+    def get_images() -> List[fitz.fitz.Pixmap]:
+        """
+        """
+        return Data.imagesTK
 
     def set_names(
         pdf_names: List[str]
@@ -69,11 +76,18 @@ class Data:
         """
         if avoid_duplicates:
             if Data.get_index(pdfileObj.name) == -1:
-                Data.total_pages += pdfileObj.n_pages
-                Data.selected.append(pdfileObj)
+                Data.total_pages += pdfileObj.n_pages  # set total pages
+                Data.selected.append(pdfileObj)  # add PDFile instance.
         else:
             Data.total_pages += pdfileObj.n_pages
             Data.selected.append(pdfileObj)
+
+    def add_images(
+        pdfileObj: PDFile
+    ) -> None:
+        """
+        """
+        Data.imagesTK += pdfileObj.images  # add images of PDFile
 
     def delete(
         pdf_name: str
@@ -264,35 +278,24 @@ class MainGUI:
 
                 self.displaycanvas.clear_canvas()
 
-# Load first PDF
-
                 paths_ = [i.name for i in filesPDF]
                 Data.set_names(pdf_names=paths_)
 
-                namePDF = os.path.basename(filesPDF[0].name)
-                data = self.read_pdf(filename=filesPDF[0])
-
-                pdfile = PDFile(
-                                name=namePDF,
-                                data=data,
-                                images=self.to_image(pdf_document=data),
-                                n_pages=len(data)
-                            )
-
-                Data.add(pdfileObj=pdfile)
-
-    #
                 self.output_filename_pdf_entry.set(Data.names[0])
 
-                print('___> ', Data.names)
+                for item in filesPDF:
+                    pdfile = PDFile(
+                                    name=os.path.basename(item.name),
+                                    data=self.read_pdf(item.name)
+                                )
+                    Data.add(pdfileObj=pdfile)
 
-                if len(filesPDF) > 1:
+# Load images async
+                th = Thread(target=self.load_images_pdf, args=[])
+                th.start()
+#
 
-                    t = Thread(target=self.read_pdf_make_images, args=[filesPDF[1:]])
-                    t.start()
-
-                self.add_files()
-                self.displaycanvas.to_canvas()
+                self.add_files_pdf_button()
 
                 convert_button = ttk.Button(
                                         self.frameUserControl,
@@ -310,24 +313,21 @@ class MainGUI:
 
                 ElementsTK.items.append({'join': convert_button})
 
-    def read_pdf_make_images(
-        self,
-        pdf_paths: List[str]
-    ) -> None:
+
+    def load_images_pdf(self) -> None:
         """
         """
-        for itemObj in pdf_paths:
-            data = self.read_pdf(filename=itemObj.name)
-            pdfile = PDFile(
-                            name=os.path.basename(itemObj.name),
-                            data=data,
-                            images=self.to_image(pdf_document=data),
-                            n_pages=len(data)
-                        )
-            Data.add(pdfileObj=pdfile)
+        for item in Data.selected:
+            name = item.name
+            images = self.to_image(pdf_document=item.data)
+            item.images = images
+            Data.add_images(pdfileObj=item)
+
+        print('> Images LOADED.')
+        self.displaycanvas.to_canvas()
 
 
-    def add_files(self) -> None:
+    def add_files_pdf_button(self) -> None:
         """
         """
         self.open_files['text'] = LanguagesClass.language['add']
@@ -608,9 +608,6 @@ class UserListBox(MainGUI):
 
         self.update_entry_filename_save()
 
-#
-#
-#
     def delete_pdf_item(self) -> None:
         """
         """
@@ -621,26 +618,7 @@ class UserListBox(MainGUI):
 
         index_deleted = Data.delete(pdf_name=item_str)
 
-        if len(Data.names) == 0:
-            print('Delete ITEM -> ', index_deleted)
-            print('-----> ', Data.names)
-            self.displaycanvas.set_index_page_button(index=1)
-            self.entry_filename.set('')
-
-            self.displaycanvas.clear_canvas()
-
-        else:
-            print('-----> ', Data.names)
-            self.entry_filename.set(os.path.basename(Data.names[0]))
-
-            self.displaycanvas.index_current_pdf -= 1
-            self.displaycanvas.current_page = 1
-
-            self.re_render_canvas()
-#
-#
-#
-
+        self.re_render_canvas()
 
     def update_entry_filename_save(self) -> None:
         """
@@ -693,6 +671,8 @@ class UserListBox(MainGUI):
                                 key=lambda x: sorted_PDF_files[x.name]
                             )
 
+        Data.imagesTK = Data.get_images()
+
         self.displaycanvas.clear_canvas()
         self.displaycanvas.to_canvas()
 
@@ -718,16 +698,10 @@ class DisplayCanvas(MainGUI):
         self.image_height = self.height_canvas - 60
         self.image_width = self.width_canvas - 20
 
-
-        self.current_page = 0
         self.current_pdf = None
-        self.index_current_pdf = 0
+        self.current_page = 0
 
         self.is_show_buttons = False
-
-
-        self.button_index_page = 1
-
 
         self.frame.place(
             x=290,
@@ -814,42 +788,14 @@ class DisplayCanvas(MainGUI):
         """
         """
         # print('--> ', len(Data.selected), Data.selected)
-        print(self.current_pdf)
+        print('-> ', self.current_pdf, self.current_page, Data.total_pages)
 
         self.show_buttons()
 
-        if (
-            self.current_pdf is not None
-            and self.current_pdf.name != Data.selected[-1].name
-        ):
-            self.button_next.state(['!disabled'])
-
-
-        if len(Data.selected) == 0:
-            self.current_page = 0
-            self.current_pdf = None
-            self.index_current_pdf = 0
-            self.button_index_page = 1
-            self.clear_canvas()
-
-            print('to_canvas() - ', len(Data.selected))
-
-        elif len(Data.selected) == 1:
-            self.current_page = 0
-            self.index_current_pdf = 0
-            self.current_pdf = Data.selected[0]
-        else:
-            self.current_pdf = Data.selected[self.index_current_pdf]
-
-
-        print('--> ', self.current_pdf, self.index_current_pdf, self.current_page)
-
-
-        if self.current_pdf is not None:
-            self.show_image(
-                            imagesTK=self.current_pdf.images,
-                            page=self.current_page
-                        )
+        self.show_image(
+                imagesTK=Data.imagesTK,
+                page=self.current_page
+            )
 
 
     def show_image(
@@ -861,21 +807,14 @@ class DisplayCanvas(MainGUI):
         """
         self.clear_canvas()
 
-        if self.button_index_page > Data.total_pages:
-            self.button_index_page = Data.total_pages
-        if self.button_index_page <= 0:
-            self.button_index_page = 1
-
         self.set_index_page_button()
-
-        print('--> ', self.current_pdf, self.index_current_pdf, self.current_page)
 
         try:
             imageTK = imagesTK[page]
         except IndexError:
             print('Error Index  ', len(imagesTK), self.current_page, self.current_page - 1)
-            self.current_page = 0
-            imageTK = imagesTK[0]
+            self.current_page = Data.total_pages - 1
+            imageTK = imagesTK[self.current_page]
 
         self.canvas.image = imageTK
         self.canvas.create_image(10, 10, image=imageTK, anchor=tk.NW)
@@ -896,24 +835,12 @@ class DisplayCanvas(MainGUI):
         self.button_prev.state(['!disabled'])
 
         self.current_page += 1
-        self.button_index_page += 1
 
-        if self.button_index_page >= Data.total_pages:
-            self.button_index_page = Data.total_pages
-
-        if self.current_page < self.current_pdf.n_pages:
+        if self.current_page < Data.total_pages:
             self.to_canvas()
-
         else:
-            self.index_current_pdf += 1
-            self.current_page = 0
-            if self.index_current_pdf >= len(Data.selected):
-                self.button_next.state(['disabled'])
-                self.index_current_pdf = len(Data.selected) - 1
-                self.current_page = self.current_pdf.n_pages - 1
-                self.to_canvas()
-            else:
-                self.to_canvas()
+            self.current_page = Data.total_pages - 1
+            self.button_next.state(['disabled'])
 
     def prev_page(
         self,
@@ -925,24 +852,13 @@ class DisplayCanvas(MainGUI):
         self.button_next.state(['!disabled'])
 
         self.current_page -= 1
-        self.button_index_page -= 1
-
-        if self.button_index_page <= 0:
-            self.button_index_page = 1
 
         if self.current_page >= 0:
             self.to_canvas()
-
         else:
-            self.index_current_pdf -= 1
-            self.current_page = self.current_pdf.n_pages - 1
-            if self.index_current_pdf < 0:
-                self.button_prev.state(['disabled'])
-                self.index_current_pdf = 0
-                self.current_page = 0
-                self.to_canvas()
-            else:
-                self.to_canvas()
+            self.current_page = 0
+            self.button_prev.state(['disabled'])
+
 
     def set_index_page_button(
         self,
@@ -950,12 +866,7 @@ class DisplayCanvas(MainGUI):
     ) -> None:
         """
         """
-        print('set_index_page_button() - ', self.button_index_page, self.button_current_page['text'])
-        if index is not None:
-            self.button_index_page = index
-            self.button_current_page['text'] = '%s' % index
-        else:
-            self.button_current_page['text'] = '%s' % self.button_index_page
+        self.button_current_page['text'] = '%s' % (self.current_page + 1)
 
 
 def main() -> None:

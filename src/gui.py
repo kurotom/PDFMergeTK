@@ -671,9 +671,13 @@ class UserListBox(MainGUI):
                                 key=lambda x: sorted_PDF_files[x.name]
                             )
 
+#
+## Establecer los datos a Data.
+##
+#
         Data.imagesTK = Data.get_images()
 
-        self.displaycanvas.clear_canvas()
+        self.displaycanvas.current_page = 0
         self.displaycanvas.to_canvas()
 
 
@@ -792,32 +796,27 @@ class DisplayCanvas(MainGUI):
 
         self.show_buttons()
 
-        self.show_image(
-                imagesTK=Data.imagesTK,
-                page=self.current_page
-            )
-
-
-    def show_image(
-        self,
-        imagesTK: List[ImageTk.PhotoImage],
-        page: int = 0
-    ) -> None:
-        """
-        """
         self.clear_canvas()
 
         self.set_index_page_button()
 
         try:
-            imageTK = imagesTK[page]
+            imageTK = Data.imagesTK[self.current_page]
         except IndexError:
-            print('Error Index  ', len(imagesTK), self.current_page, self.current_page - 1)
+            print('Error Index  ')
             self.current_page = Data.total_pages - 1
-            imageTK = imagesTK[self.current_page]
+            imageTK = Data.imagesTK[self.current_page]
+
+        print(len(Data.imagesTK), self.current_page)
 
         self.canvas.image = imageTK
         self.canvas.create_image(10, 10, image=imageTK, anchor=tk.NW)
+
+        if self.current_page < Data.total_pages:
+            self.button_next.state(['!disabled'])
+
+        # if self.current_page >= 0:
+        #     self.button_prev.state(['!disabled'])
 
 
     def clear_canvas(self) -> None:

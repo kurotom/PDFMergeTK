@@ -15,9 +15,14 @@ import subprocess
 
 from PIL import Image, ImageTk
 
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 from src.langs import languagesDict
+
+from src.models import PDFile
+
+#
+from threading import Thread
 
 
 class ElementsTK:
@@ -29,9 +34,80 @@ class LanguagesClass:
     lang = 'en'
     language = languagesDict[lang]
 
+    def update(
+        lang: str
+    ) -> None:
+        """
+        """
+        LanguagesClass.lang = lang
+        LanguagesClass.language = languagesDict[lang]
 
-class PDFiles:
-    selected = {}
+
+class Data:
+    # total_pages
+    total_pages = 0
+    # [ names_pdf ]
+    names = []
+    # [ PDFile_objs ]
+    selected = []
+
+    def set_names(
+        pdf_names: List[str]
+    ) -> None:
+        """
+        """
+        for name in pdf_names:
+            name = os.path.basename(name)
+            if name not in Data.names:
+                Data.names.append(name)
+
+    def add(
+        pdfileObj: PDFile,
+        avoid_duplicates: bool = True
+    ) -> None:
+        """
+        """
+        if avoid_duplicates:
+            if Data.get_index(pdfileObj.name) == -1:
+                Data.total_pages += pdfileObj.n_pages
+                Data.selected.append(pdfileObj)
+        else:
+            Data.total_pages += pdfileObj.n_pages
+            Data.selected.append(pdfileObj)
+
+    def delete(
+        pdf_name: str
+    ) -> int:
+        """
+        """
+        idx = Data.get_index(pdf_name)
+        if idx < 0:
+            return idx
+        else:
+            for item in Data.selected:
+                if item.name == pdf_name:
+                    Data.selected.pop(idx)
+                    Data.names.pop(Data.names.index(pdf_name))
+
+                    Data.total_pages = sum(
+                                        [
+                                            i.n_pages
+                                            for i in Data.selected
+                                        ]
+                                    )
+
+                    return idx
+
+    def get_index(
+        pdf_name: str
+    ) -> int:
+        """
+        """
+        idx = -1
+        for i in range(len(Data.selected)):
+            if pdf_name == Data.selected[i].name:
+                idx = i
+        return idx
 
 
 class MainGUI:
@@ -46,6 +122,11 @@ class MainGUI:
         """
         """
         LanguagesClass.lang = lang
+
+        self.height_canvas = 500
+        self.width_canvas = 300
+        self.image_height = self.height_canvas - 60
+        self.image_width = self.width_canvas - 20
 
         self.__width_frame_usercontrol = 300
         self.__height_frame_usercontrol = 1
@@ -120,12 +201,7 @@ class MainGUI:
     def change_language(self, lang) -> None:
         """
         """
-        if lang == 'en':
-            LanguagesClass.lang = 'en'
-        if lang == 'es':
-            LanguagesClass.lang = 'es'
-
-        LanguagesClass.language = languagesDict[LanguagesClass.lang]
+        LanguagesClass.update(lang)
 
         for menuItem in ElementsTK.menuItems:
             item, indexLabel = menuItem
@@ -154,7 +230,7 @@ class MainGUI:
         self.open_files = ttk.Button(
                                 self.frameUserControl,
                                 text=LanguagesClass.language['open'],
-                                command=self.select_pdf
+                                command=self.select_pdf_widget
                             )
 
         self.open_files.place(
@@ -166,7 +242,7 @@ class MainGUI:
 
         ElementsTK.items.append({'open': self.open_files})
 
-    def select_pdf(self) -> None:
+    def select_pdf_widget(self) -> None:
         """
         """
         filesPDF = filedialog.askopenfiles(
@@ -186,21 +262,34 @@ class MainGUI:
                 if isinstance(filesPDF, list) is False:
                     filesPDF = [filesPDF]
 
-                if self.adding_files:
-                    self.displaycanvas.reset_images()
-
                 self.displaycanvas.clear_canvas()
 
-                for item in filesPDF:
+# Load first PDF
 
-                    name_, ext_ = os.path.splitext(
-                                            os.path.basename(str(filesPDF[0]))
-                                        )
-                    self.output_filename_pdf_entry.set(name_)
+                paths_ = [i.name for i in filesPDF]
+                Data.set_names(pdf_names=paths_)
 
-                    if item not in PDFiles.selected:
-                        data = self.read_pdf(filename=item)
-                        PDFiles.selected[item.name] = data
+                namePDF = os.path.basename(filesPDF[0].name)
+                data = self.read_pdf(filename=filesPDF[0])
+
+                pdfile = PDFile(
+                                name=namePDF,
+                                data=data,
+                                images=self.to_image(pdf_document=data),
+                                n_pages=len(data)
+                            )
+
+                Data.add(pdfileObj=pdfile)
+
+    #
+                self.output_filename_pdf_entry.set(Data.names[0])
+
+                print('___> ', Data.names)
+
+                if len(filesPDF) > 1:
+
+                    t = Thread(target=self.read_pdf_make_images, args=[filesPDF[1:]])
+                    t.start()
 
                 self.add_files()
                 self.displaycanvas.to_canvas()
@@ -221,11 +310,28 @@ class MainGUI:
 
                 ElementsTK.items.append({'join': convert_button})
 
+    def read_pdf_make_images(
+        self,
+        pdf_paths: List[str]
+    ) -> None:
+        """
+        """
+        for itemObj in pdf_paths:
+            data = self.read_pdf(filename=itemObj.name)
+            pdfile = PDFile(
+                            name=os.path.basename(itemObj.name),
+                            data=data,
+                            images=self.to_image(pdf_document=data),
+                            n_pages=len(data)
+                        )
+            Data.add(pdfileObj=pdfile)
+
+
     def add_files(self) -> None:
         """
         """
         self.open_files['text'] = LanguagesClass.language['add']
-        self.open_files['command'] = self.select_pdf
+        self.open_files['command'] = self.select_pdf_widget
         self.adding_files = True
 
     def save_as(self) -> None:
@@ -324,10 +430,29 @@ class MainGUI:
         else:
             return fitz.open(filename, filetype='pdf')
 
-    def to_image(self) -> None:
+    def to_image(
+        self,
+        pdf_document: fitz.fitz.Document
+    ) -> list:
         """
         """
-        pass
+        images = []
+        for page in pdf_document:
+            page_pix = page.get_pixmap()
+            currentImage = Image.frombytes(
+                                    mode='RGB',
+                                    size=[page_pix.width, page_pix.height],
+                                    data=page_pix.samples
+                                )
+
+            resized_img = currentImage.resize(
+                            (self.image_width, self.image_height),
+                            Image.LANCZOS
+                        )
+
+            imageTK = ImageTk.PhotoImage(resized_img)
+            images.append(imageTK)
+        return images
 
 
 class UserListBox(MainGUI):
@@ -344,18 +469,10 @@ class UserListBox(MainGUI):
         self.width = width
 
         self.displaycanvas = displaycanvas
-        self.total_index = len(PDFiles.selected)
+        self.total_index = len(Data.names)
         self.entry_filename = entry_filename
 
-        self.list_pdfs = list(PDFiles.selected.keys())
-
-#
-        pdfs_basename = [
-                            os.path.basename(i)
-                            for i in self.list_pdfs
-                        ]
-
-        self.path_pdf_files_dict = dict(zip(pdfs_basename, self.list_pdfs))
+        self.list_pdfs = Data.names
 
         self.frame = frame
 
@@ -373,7 +490,7 @@ class UserListBox(MainGUI):
                 )
         # print('--> ', self.path_pdf_files_dict)
 
-        self.choices.set(pdfs_basename)
+        self.choices.set(self.list_pdfs)
 
         horizontalScroll = ttk.Scrollbar(
                                 self.frame,
@@ -402,15 +519,19 @@ class UserListBox(MainGUI):
                     text=u'\u21E9',
                     command=self.down_file_list
                 )
+        delete_button = ttk.Button(
+                    self.frame,
+                    text=u'\U0001F5D1',
+                    command=self.delete_pdf_item
+                )
 
+# ListBox Place
         self.label_listbox.place(
                 x=0,
                 y=40,
                 height=30,
                 width=self.width - (30)
             )
-
-# ListBox Place
         self.listbox_files.place(
                 x=0,
                 y=70,
@@ -430,26 +551,33 @@ class UserListBox(MainGUI):
                 width=15
             )
 #
-
+# Buttons ListBox
         up_button.place(
-                x=(self.width / 2) - 75,
-                y=380,
-                width=50,
+                x=0,
+                y=384,
+                width=60,
                 height=30
             )
         down_button.place(
-                x=(self.width / 2) - 25,
-                y=380,
-                width=50,
+                x=62,
+                y=384,
+                width=60,
                 height=30
             )
-
+        delete_button.place(
+                # x=(self.width / 2) - 75,
+                x=(self.width - 2) - 90,
+                y=384,
+                width=60,
+                height=30
+            )
+#
         ElementsTK.items.append({'list': self.label_listbox})
 
     def up_file_list(self) -> None:
         """
         """
-        item_index = self.get_item_and_index()
+        item_index = self.get_item_and_index_selected()
         if item_index is not None:
             item_selected, position = item_index
             new_position = position - 1
@@ -466,7 +594,7 @@ class UserListBox(MainGUI):
     def down_file_list(self) -> None:
         """
         """
-        item_index = self.get_item_and_index()
+        item_index = self.get_item_and_index_selected()
         if item_index is not None:
             item_selected, position = item_index
             new_position = position + 1
@@ -479,6 +607,40 @@ class UserListBox(MainGUI):
         self.re_render_canvas()
 
         self.update_entry_filename_save()
+
+#
+#
+#
+    def delete_pdf_item(self) -> None:
+        """
+        """
+        item_str, index = self.get_item_and_index_selected()
+        print('delete listbox - ', index, item_str)
+
+        self.listbox_files.delete(index)
+
+        index_deleted = Data.delete(pdf_name=item_str)
+
+        if len(Data.names) == 0:
+            print('Delete ITEM -> ', index_deleted)
+            print('-----> ', Data.names)
+            self.displaycanvas.set_index_page_button(index=1)
+            self.entry_filename.set('')
+
+            self.displaycanvas.clear_canvas()
+
+        else:
+            print('-----> ', Data.names)
+            self.entry_filename.set(os.path.basename(Data.names[0]))
+
+            self.displaycanvas.index_current_pdf -= 1
+            self.displaycanvas.current_page = 1
+
+            self.re_render_canvas()
+#
+#
+#
+
 
     def update_entry_filename_save(self) -> None:
         """
@@ -498,7 +660,7 @@ class UserListBox(MainGUI):
         self.listbox_files.insert(new_position, item_selected)
         self.listbox_files.selection_set(new_position)
 
-    def get_item_and_index(self) -> Union[Tuple[str, int], None]:
+    def get_item_and_index_selected(self) -> Union[Tuple[str, int], None]:
         """
         """
         try:
@@ -514,18 +676,22 @@ class UserListBox(MainGUI):
         """
         """
         names = self.listbox_files.get(0, 'end')
-        paths = [self.path_pdf_files_dict[i] for i in names]
-        return paths
+        return names
 
     def re_render_canvas(self) -> None:
         """
         """
         sorted_PDF_files = {
-            i: PDFiles.selected[i]
-            for i in self.get_listbox()
-        }
+                name: index
+                for index, name in enumerate(self.get_listbox())
+            }
 
-        PDFiles.selected = sorted_PDF_files
+        print('>>>  ', sorted_PDF_files)
+
+        Data.selected = sorted(
+                                Data.selected,
+                                key=lambda x: sorted_PDF_files[x.name]
+                            )
 
         self.displaycanvas.clear_canvas()
         self.displaycanvas.to_canvas()
@@ -552,11 +718,16 @@ class DisplayCanvas(MainGUI):
         self.image_height = self.height_canvas - 60
         self.image_width = self.width_canvas - 20
 
-        self.images_pdf = []
 
         self.current_page = 0
-        self.total_pages = 0
-        self.current_image = None
+        self.current_pdf = None
+        self.index_current_pdf = 0
+
+        self.is_show_buttons = False
+
+
+        self.button_index_page = 1
+
 
         self.frame.place(
             x=290,
@@ -580,107 +751,140 @@ class DisplayCanvas(MainGUI):
     def show_buttons(self) -> None:
         """
         """
-        self.frame_buttons = ttk.Frame(self.frame)
+        if self.is_show_buttons is False:
 
-        self.button_prev = ttk.Button(
-                                    self.frame_buttons,
-                                    text=u'\u21E6',
-                                    command=self.prev_page
+            self.is_show_buttons = True
+
+            self.frame_buttons = ttk.Frame(self.frame)
+
+            self.button_prev = ttk.Button(
+                                        self.frame_buttons,
+                                        text=u'\u21E6',
+                                        command=self.prev_page
+                                    )
+
+            self.button_current_page = ttk.Button(
+                                                self.frame_buttons,
+                                                text="",
+                                                command=None
+                                            )
+
+            self.button_current_page.state(['disabled'])
+
+            self.button_next = ttk.Button(
+                                        self.frame_buttons,
+                                        text=u'\u21E8',
+                                        command=self.next_page
+                                    )
+
+            self.button_delete = ttk.Button(
+                                        self.frame_buttons,
+                                        text=u'\U0001F5D1',
+                                        command=None
+                                    )
+
+            middle_frame = (self.width_canvas / 2)
+
+            self.frame_buttons.place(
+                                    x=0,
+                                    y=self.height_canvas - 40,
+                                    relwidth=1,
+                                    height=40
                                 )
-
-        self.button_current_page = ttk.Button(
-                                            self.frame_buttons,
-                                            text="",
-                                            command=None
-                                        )
-
-        self.button_current_page.state(['disabled'])
-
-        self.button_next = ttk.Button(
-                                    self.frame_buttons,
-                                    text=u'\u21E8',
-                                    command=self.next_page
-                                )
-
-        middle_frame = (self.width_canvas / 2)
-
-        self.frame_buttons.place(
-                                x=0,
-                                y=self.height_canvas - 40,
-                                relwidth=1,
-                                height=40
+            self.button_prev.place(
+                                x=middle_frame - 75,
+                                y=0,
+                                width=50,
+                                height=30
                             )
-        self.button_prev.place(
-                            x=middle_frame - 75,
-                            y=0,
-                            width=50,
-                            height=30
-                        )
-        self.button_current_page.place(
-                                    x=middle_frame - (50 / 2),
-                                    y=0,
-                                    width=50,
-                                    height=30
-                                )
-        self.button_next.place(
-                            x=middle_frame + (50 / 2),
-                            y=0,
-                            width=50,
-                            height=30
-                        )
+            self.button_current_page.place(
+                                        x=middle_frame - (50 / 2),
+                                        y=0,
+                                        width=50,
+                                        height=30
+                                    )
+            self.button_next.place(
+                                x=middle_frame + (50 / 2),
+                                y=0,
+                                width=50,
+                                height=30
+                            )
 
     def to_canvas(self) -> None:
         """
         """
-        # print('--> ', len(PDFiles.selected))
-        self.images_pdf.clear()
+        # print('--> ', len(Data.selected), Data.selected)
+        print(self.current_pdf)
 
         self.show_buttons()
 
-        for filename, pdf in PDFiles.selected.items():
-            # print(filename, len(pdf))
+        if (
+            self.current_pdf is not None
+            and self.current_pdf.name != Data.selected[-1].name
+        ):
+            self.button_next.state(['!disabled'])
 
-            for page in pdf:
-                page_pix = page.get_pixmap()
-                currentImage = Image.frombytes(
-                                        mode='RGB',
-                                        size=[page_pix.width, page_pix.height],
-                                        data=page_pix.samples
-                                    )
 
-                resized_img = currentImage.resize(
-                                (self.image_width, self.image_height),
-                                Image.LANCZOS
-                            )
+        if len(Data.selected) == 0:
+            self.current_page = 0
+            self.current_pdf = None
+            self.index_current_pdf = 0
+            self.button_index_page = 1
+            self.clear_canvas()
 
-                imageTK = ImageTk.PhotoImage(resized_img)
-                self.images_pdf.append(imageTK)
+            print('to_canvas() - ', len(Data.selected))
 
-        self.total_pages = len(self.images_pdf)
-        self.show_image(imageTK=self.images_pdf[self.current_page])
-        self.set_index_page_button()
+        elif len(Data.selected) == 1:
+            self.current_page = 0
+            self.index_current_pdf = 0
+            self.current_pdf = Data.selected[0]
+        else:
+            self.current_pdf = Data.selected[self.index_current_pdf]
+
+
+        print('--> ', self.current_pdf, self.index_current_pdf, self.current_page)
+
+
+        if self.current_pdf is not None:
+            self.show_image(
+                            imagesTK=self.current_pdf.images,
+                            page=self.current_page
+                        )
+
 
     def show_image(
         self,
-        imageTK: ImageTk.PhotoImage
+        imagesTK: List[ImageTk.PhotoImage],
+        page: int = 0
     ) -> None:
         """
         """
         self.clear_canvas()
+
+        if self.button_index_page > Data.total_pages:
+            self.button_index_page = Data.total_pages
+        if self.button_index_page <= 0:
+            self.button_index_page = 1
+
+        self.set_index_page_button()
+
+        print('--> ', self.current_pdf, self.index_current_pdf, self.current_page)
+
+        try:
+            imageTK = imagesTK[page]
+        except IndexError:
+            print('Error Index  ', len(imagesTK), self.current_page, self.current_page - 1)
+            self.current_page = 0
+            imageTK = imagesTK[0]
+
         self.canvas.image = imageTK
         self.canvas.create_image(10, 10, image=imageTK, anchor=tk.NW)
+
 
     def clear_canvas(self) -> None:
         """
         """
         self.canvas.delete('all')
-
-    def reset_images(self) -> None:
-        """
-        """
-        self.images_pdf.clear()
-        self.total_pages = 0
-        self.current_image = None
 
     def next_page(
         self,
@@ -688,13 +892,28 @@ class DisplayCanvas(MainGUI):
     ) -> None:
         """
         """
-        self.current_page += 1
-        if self.current_page < self.total_pages:
-            self.show_image(imageTK=self.images_pdf[self.current_page])
-        else:
-            self.current_page = self.total_pages - 1
+        self.button_next.state(['!disabled'])
+        self.button_prev.state(['!disabled'])
 
-        self.set_index_page_button()
+        self.current_page += 1
+        self.button_index_page += 1
+
+        if self.button_index_page >= Data.total_pages:
+            self.button_index_page = Data.total_pages
+
+        if self.current_page < self.current_pdf.n_pages:
+            self.to_canvas()
+
+        else:
+            self.index_current_pdf += 1
+            self.current_page = 0
+            if self.index_current_pdf >= len(Data.selected):
+                self.button_next.state(['disabled'])
+                self.index_current_pdf = len(Data.selected) - 1
+                self.current_page = self.current_pdf.n_pages - 1
+                self.to_canvas()
+            else:
+                self.to_canvas()
 
     def prev_page(
         self,
@@ -702,19 +921,41 @@ class DisplayCanvas(MainGUI):
     ) -> None:
         """
         """
+        self.button_prev.state(['!disabled'])
+        self.button_next.state(['!disabled'])
+
         self.current_page -= 1
+        self.button_index_page -= 1
+
+        if self.button_index_page <= 0:
+            self.button_index_page = 1
+
         if self.current_page >= 0:
-            self.show_image(imageTK=self.images_pdf[self.current_page])
+            self.to_canvas()
+
         else:
-            self.current_page = 0
+            self.index_current_pdf -= 1
+            self.current_page = self.current_pdf.n_pages - 1
+            if self.index_current_pdf < 0:
+                self.button_prev.state(['disabled'])
+                self.index_current_pdf = 0
+                self.current_page = 0
+                self.to_canvas()
+            else:
+                self.to_canvas()
 
-        self.set_index_page_button()
-
-    def set_index_page_button(self) -> None:
+    def set_index_page_button(
+        self,
+        index: int = None
+    ) -> None:
         """
         """
-        string = f'{self.current_page + 1}-{self.total_pages}'
-        self.button_current_page['text'] = string
+        print('set_index_page_button() - ', self.button_index_page, self.button_current_page['text'])
+        if index is not None:
+            self.button_index_page = index
+            self.button_current_page['text'] = '%s' % index
+        else:
+            self.button_current_page['text'] = '%s' % self.button_index_page
 
 
 def main() -> None:

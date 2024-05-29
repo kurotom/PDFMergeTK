@@ -5,24 +5,23 @@ import tkinter as tk
 from tkinter import ttk, Tk
 
 from tkinter import filedialog
-# from tkinter import messagebox
-
-import fitz
 
 import os
 import sys
 import subprocess
 
-from PIL import Image, ImageTk
-
-from typing import Union, Tuple, List
+from threading import Thread, Event
 
 from src.langs import languagesDict
 
-from src.models import PDFile
+from src.reader import ReaderPDFImage
 
-#
-from threading import Thread
+from src.models import (
+        PDFile,
+        Data
+    )
+
+from typing import Union, Tuple
 
 
 class ElementsTK:
@@ -43,85 +42,62 @@ class LanguagesClass:
         LanguagesClass.language = languagesDict[lang]
 
 
-class Data:
-    # total_pages
-    total_pages = 0
-    # [ names_pdf ]
-    names = []
-    # [ PDFile_objs ]
-    selected = []
-    # [ fitz.fitz.Pixmap ]
-    imagesTK = []
-
-    def get_images() -> List[fitz.fitz.Pixmap]:
-        """
-        """
-        return Data.imagesTK
-
-    def set_names(
-        pdf_names: List[str]
+class LoadImagePDFThread(Thread):
+    """
+    """
+    def __init__(
+        self,
+        height: int,
+        width: int,
+        canvasDisplay: tk.Canvas,
+        event: Event
     ) -> None:
         """
         """
-        for name in pdf_names:
-            name = os.path.basename(name)
-            if name not in Data.names:
-                Data.names.append(name)
+        Thread.__init__(self)
+        self.image_height = height
+        self.image_width = width
+        self.canvasDisplay = canvasDisplay
+        self.event = event
 
-    def add(
-        pdfileObj: PDFile,
-        avoid_duplicates: bool = True
-    ) -> None:
+    def run(self) -> None:
         """
         """
-        if avoid_duplicates:
-            if Data.get_index(pdfileObj.name) == -1:
-                Data.total_pages += pdfileObj.n_pages  # set total pages
-                Data.selected.append(pdfileObj)  # add PDFile instance.
-        else:
-            Data.total_pages += pdfileObj.n_pages
-            Data.selected.append(pdfileObj)
+#
+# Nota: arreglar el problema que se genera cuando se ejecuta con varios
+# archivos simultáneamente.
+# Posiblemente un `Queue()` para guardar los nombres
+# y ser ejecutados cuando se termina el `PDFile` actual.
+#
 
-    def add_images(
-        pdfileObj: PDFile
-    ) -> None:
-        """
-        """
-        Data.imagesTK += pdfileObj.images  # add images of PDFile
+        print('> LoadImagePDF thread - Started')
+        is_show_canvas = False
+        for item in Data.selected:
 
-    def delete(
-        pdf_name: str
-    ) -> int:
-        """
-        """
-        idx = Data.get_index(pdf_name)
-        if idx < 0:
-            return idx
-        else:
-            for item in Data.selected:
-                if item.name == pdf_name:
-                    Data.selected.pop(idx)
-                    Data.names.pop(Data.names.index(pdf_name))
+            if self.event.is_set():
+                break
 
-                    Data.total_pages = sum(
-                                        [
-                                            i.n_pages
-                                            for i in Data.selected
-                                        ]
-                                    )
+            if item.name not in Data.images_loaded:
+                print('==> ', item.name)
+                Data.set_loaded_images_pdfile(pdfileObj=item)
+                generator_images = ReaderPDFImage.to_image(
+                                            pdf_document=item.data,
+                                            height=self.image_height,
+                                            width=self.image_width
+                                        )
+                for image in generator_images:
 
-                    return idx
+                    if self.event.is_set():
+                        break
 
-    def get_index(
-        pdf_name: str
-    ) -> int:
-        """
-        """
-        idx = -1
-        for i in range(len(Data.selected)):
-            if pdf_name == Data.selected[i].name:
-                idx = i
-        return idx
+                    item.images.append(image)
+                    Data.add_image(
+                                current_name=item.name,
+                                image=image
+                            )
+                    if is_show_canvas is False:
+                        is_show_canvas = True
+                        self.canvasDisplay.to_canvas()
 
 
 class MainGUI:
@@ -137,10 +113,14 @@ class MainGUI:
         """
         LanguagesClass.lang = lang
 
+        self.event_thread = Event()
+        self.thread_load_image = None
+
         self.height_canvas = 500
         self.width_canvas = 300
         self.image_height = self.height_canvas - 60
         self.image_width = self.width_canvas - 20
+
 
         self.__width_frame_usercontrol = 300
         self.__height_frame_usercontrol = 1
@@ -176,6 +156,8 @@ class MainGUI:
         self.rootGUI.geometry("600x510")
         self.rootGUI.resizable(False, False)
 
+        self.rootGUI.protocol("WM_DELETE_WINDOW", self.on_closing)
+
     def menu(self) -> None:
         """
         """
@@ -207,7 +189,7 @@ class MainGUI:
                     menu=langs_
                 )
 
-        # item , {index: label}
+        # [item , {index: label}]
         ElementsTK.menuItems.append([quit_, {0: 'quit'}])
         ElementsTK.menuItems.append([langs_, {0: 'en', 1: 'es'}])
         ElementsTK.menuItems.append([menubar, {1: 'file', 2: 'langMenu'}])
@@ -278,23 +260,31 @@ class MainGUI:
 
                 self.displaycanvas.clear_canvas()
 
-                paths_ = [i.name for i in filesPDF]
-                Data.set_names(pdf_names=paths_)
-
-                self.output_filename_pdf_entry.set(Data.names[0])
-
                 for item in filesPDF:
+                    # print(item)
+                    name_pdf = os.path.basename(item.name)
                     pdfile = PDFile(
-                                    name=os.path.basename(item.name),
-                                    data=self.read_pdf(item.name)
-                                )
+                                name=name_pdf,
+                                data=ReaderPDFImage.read_pdf(item.name)
+                            )
                     Data.add(pdfileObj=pdfile)
 
-# Load images async
-                th = Thread(target=self.load_images_pdf, args=[])
-                th.start()
+                self.output_filename_pdf_entry.set(Data.names[0])
 #
-
+#
+# Load Images PDF - Async
+                self.event_thread.clear()
+                self.thread_load_image = LoadImagePDFThread(
+                                            height=self.image_height,
+                                            width=self.image_width,
+                                            canvasDisplay=self.displaycanvas,
+                                            event=self.event_thread
+                                        )
+                self.thread_load_image.daemon = True
+                self.thread_load_image.start()
+#
+#
+#
                 self.add_files_pdf_button()
 
                 convert_button = ttk.Button(
@@ -312,20 +302,6 @@ class MainGUI:
                 self.listbox_pdf()
 
                 ElementsTK.items.append({'join': convert_button})
-
-
-    def load_images_pdf(self) -> None:
-        """
-        """
-        for item in Data.selected:
-            name = item.name
-            images = self.to_image(pdf_document=item.data)
-            item.images = images
-            Data.add_images(pdfileObj=item)
-
-        print('> Images LOADED.')
-        self.displaycanvas.to_canvas()
-
 
     def add_files_pdf_button(self) -> None:
         """
@@ -368,23 +344,23 @@ class MainGUI:
         filename_output = self.output_filename_pdf_entry.get()
         filename_output = filename_output.replace('.pdf', '')
         filename_output = '%s.pdf' % (filename_output)
-
-        sorted_files_pdf = self.userlistbox.get_listbox()
-
-        first_pdf = sorted_files_pdf[0]
-        first_pdf_data = self.read_pdf(filename=first_pdf)
-
         file_save_path = '%s%s%s' % (
                             os.path.expanduser('~'),
                             os.path.sep,
                             filename_output
                         )
 
-        file_save_path_data = self.read_pdf()
+        sorted_files_pdf = self.userlistbox.get_listbox()
 
-        for file_pdf in sorted_files_pdf[1:]:
-            file_pdf_data = self.read_pdf(filename=file_pdf)
-            first_pdf_data.insert_pdf(file_pdf_data)
+        first_pdf = sorted_files_pdf[0]
+        pdf_object = Data.find(name=first_pdf)
+        first_pdf_data = pdf_object.data
+
+        file_save_path_data = ReaderPDFImage.read_pdf()
+
+        for pdfile_name in sorted_files_pdf[1:]:
+            pdfObj = Data.find(name=pdfile_name)
+            first_pdf_data.insert_pdf(pdfObj.data)
 
         file_save_path_data.insert_pdf(first_pdf_data)
 
@@ -407,6 +383,7 @@ class MainGUI:
         elif current_plat == 'win32':
             os.startfile(file_path)
         else:
+            # Platform Error.
             pass
 
     def listbox_pdf(self) -> None:
@@ -419,43 +396,22 @@ class MainGUI:
                             displaycanvas=self.displaycanvas
                         )
 
-    def read_pdf(
-        self,
-        filename: str = None
-    ) -> fitz.fitz.Document:
+    def on_closing(self):
         """
         """
-        if filename is None:
-            return fitz.open()
-        else:
-            return fitz.open(filename, filetype='pdf')
+        # print('> on_closing - MainGUI')
+        if self.thread_load_image is not None:
+            self.event_thread.set()
+            self.event_thread.clear()
+            self.thread_load_image = None
 
-    def to_image(
-        self,
-        pdf_document: fitz.fitz.Document
-    ) -> list:
-        """
-        """
-        images = []
-        for page in pdf_document:
-            page_pix = page.get_pixmap()
-            currentImage = Image.frombytes(
-                                    mode='RGB',
-                                    size=[page_pix.width, page_pix.height],
-                                    data=page_pix.samples
-                                )
-
-            resized_img = currentImage.resize(
-                            (self.image_width, self.image_height),
-                            Image.LANCZOS
-                        )
-
-            imageTK = ImageTk.PhotoImage(resized_img)
-            images.append(imageTK)
-        return images
+        self.rootGUI.destroy()
 
 
 class UserListBox(MainGUI):
+    """
+    """
+
     def __init__(
         self,
         frame: tk.Frame,
@@ -492,34 +448,34 @@ class UserListBox(MainGUI):
 
         self.choices.set(self.list_pdfs)
 
-        horizontalScroll = ttk.Scrollbar(
+        self.horizontalScroll = ttk.Scrollbar(
                                 self.frame,
                                 orient=tk.HORIZONTAL,
                                 command=self.listbox_files.xview
                             )
-        verticalScroll = ttk.Scrollbar(
+        self.verticalScroll = ttk.Scrollbar(
                                 self.frame,
                                 orient=tk.VERTICAL,
                                 command=self.listbox_files.yview
                             )
 
         self.listbox_files.configure(
-                xscrollcommand=horizontalScroll.set,
-                yscrollcommand=verticalScroll.set
+                xscrollcommand=self.horizontalScroll.set,
+                yscrollcommand=self.verticalScroll.set
             )
 
 #
-        up_button = ttk.Button(
+        self.up_button = ttk.Button(
                     self.frame,
                     text=u'\u21E7',
                     command=self.up_file_list
                 )
-        down_button = ttk.Button(
+        self.down_button = ttk.Button(
                     self.frame,
                     text=u'\u21E9',
                     command=self.down_file_list
                 )
-        delete_button = ttk.Button(
+        self.delete_button = ttk.Button(
                     self.frame,
                     text=u'\U0001F5D1',
                     command=self.delete_pdf_item
@@ -538,13 +494,13 @@ class UserListBox(MainGUI):
                 height=300,
                 width=self.width - (45)
             )
-        horizontalScroll.place(
+        self.horizontalScroll.place(
                 x=0,
                 y=365,
                 height=15,
                 width=self.width - (45)
             )
-        verticalScroll.place(
+        self.verticalScroll.place(
                 x=self.width - (45),
                 y=70,
                 height=295,
@@ -552,19 +508,19 @@ class UserListBox(MainGUI):
             )
 #
 # Buttons ListBox
-        up_button.place(
+        self.up_button.place(
                 x=0,
                 y=384,
                 width=60,
                 height=30
             )
-        down_button.place(
+        self.down_button.place(
                 x=62,
                 y=384,
                 width=60,
                 height=30
             )
-        delete_button.place(
+        self.delete_button.place(
                 # x=(self.width / 2) - 75,
                 x=(self.width - 2) - 90,
                 y=384,
@@ -589,8 +545,6 @@ class UserListBox(MainGUI):
                     )
         self.re_render_canvas()
 
-        self.update_entry_filename_save()
-
     def down_file_list(self) -> None:
         """
         """
@@ -606,13 +560,11 @@ class UserListBox(MainGUI):
                     )
         self.re_render_canvas()
 
-        self.update_entry_filename_save()
-
     def delete_pdf_item(self) -> None:
         """
         """
         item_str, index = self.get_item_and_index_selected()
-        print('delete listbox - ', index, item_str)
+        # print('delete listbox - ', index, item_str)
 
         self.listbox_files.delete(index)
 
@@ -623,8 +575,11 @@ class UserListBox(MainGUI):
     def update_entry_filename_save(self) -> None:
         """
         """
-        name_ = self.listbox_files.get(0, 'end')[0].replace('.pdf', '')
-        self.entry_filename.set(name_)
+        if len(Data.selected) == 0:
+            self.entry_filename.set('')
+        else:
+            name_ = self.listbox_files.get(0, 'end')[0].replace('.pdf', '')
+            self.entry_filename.set(name_)
 
     def relocate_item(
         self,
@@ -659,25 +614,12 @@ class UserListBox(MainGUI):
     def re_render_canvas(self) -> None:
         """
         """
-        sorted_PDF_files = {
-                name: index
-                for index, name in enumerate(self.get_listbox())
-            }
+        self.update_entry_filename_save()
 
-        print('>>>  ', sorted_PDF_files)
+        Data.sort(listKey=self.get_listbox())
 
-        Data.selected = sorted(
-                                Data.selected,
-                                key=lambda x: sorted_PDF_files[x.name]
-                            )
-
-#
-## Establecer los datos a Data.
-##
-#
-        Data.imagesTK = Data.get_images()
-
-        self.displaycanvas.current_page = 0
+        self.displaycanvas.clear_canvas()
+        self.displaycanvas.set_index_page_button()
         self.displaycanvas.to_canvas()
 
 
@@ -791,32 +733,38 @@ class DisplayCanvas(MainGUI):
     def to_canvas(self) -> None:
         """
         """
-        # print('--> ', len(Data.selected), Data.selected)
-        print('-> ', self.current_pdf, self.current_page, Data.total_pages)
-
         self.show_buttons()
 
         self.clear_canvas()
 
         self.set_index_page_button()
 
-        try:
-            imageTK = Data.imagesTK[self.current_page]
-        except IndexError:
-            print('Error Index  ')
-            self.current_page = Data.total_pages - 1
-            imageTK = Data.imagesTK[self.current_page]
+        # print('>> ', Data.total_pages)
 
-        print(len(Data.imagesTK), self.current_page)
+        if Data.total_pages > 0:
+            try:
+                currentImage = Data.imagesTK[self.current_page]
+            except IndexError:
+                # print('Error Index, Data.imagesTK')
+                # print('-> ', len(Data.imagesTK))
+                self.current_page = Data.total_pages - 1
+                currentImage = Data.imagesTK[self.current_page]
 
-        self.canvas.image = imageTK
-        self.canvas.create_image(10, 10, image=imageTK, anchor=tk.NW)
+            # print(Data.status())
 
-        if self.current_page < Data.total_pages:
-            self.button_next.state(['!disabled'])
+            self.canvas.image = currentImage
+            self.canvas.create_image(10, 10, image=currentImage, anchor=tk.NW)
 
-        # if self.current_page >= 0:
-        #     self.button_prev.state(['!disabled'])
+            if self.current_page < Data.total_pages:
+                self.button_next.state(['!disabled'])
+
+            if self.current_page >= 0:
+                self.button_prev.state(['!disabled'])
+
+        else:
+            self.button_next.state(['disabled'])
+            self.button_prev.state(['disabled'])
+            self.set_index_page_button(index=0)
 
 
     def clear_canvas(self) -> None:
@@ -838,7 +786,7 @@ class DisplayCanvas(MainGUI):
         if self.current_page < Data.total_pages:
             self.to_canvas()
         else:
-            self.current_page = Data.total_pages - 1
+            self.current_page = self.current_page - 1
             self.button_next.state(['disabled'])
 
     def prev_page(
@@ -858,17 +806,22 @@ class DisplayCanvas(MainGUI):
             self.current_page = 0
             self.button_prev.state(['disabled'])
 
-
     def set_index_page_button(
         self,
         index: int = None
     ) -> None:
         """
         """
-        self.button_current_page['text'] = '%s' % (self.current_page + 1)
+        if index is None:
+            self.button_current_page['text'] = '%s' % (self.current_page + 1)
+        else:
+            self.current_page = index
+            self.button_current_page['text'] = '%s' % (self.current_page + 1)
 
 
 def main() -> None:
+    """
+    """
     root = Tk()
     gui = MainGUI(root)
     root.mainloop()

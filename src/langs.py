@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """
+Languages used by the application.
 """
 
 languagesDict = {

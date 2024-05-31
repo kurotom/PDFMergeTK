@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+PDFile : PDF file object, holds their name, data, images, number of pages.
+Data : manages all PDF data (PDFiles instances) of application.
 """
 
 import fitz
@@ -10,6 +12,10 @@ from typing import Union, List
 
 
 class PDFile:
+    """
+    In charge to holds data of PDF file.
+    """
+
     def __init__(
         self,
         name: str,
@@ -17,6 +23,7 @@ class PDFile:
         images: List[fitz.fitz.Pixmap] = []
     ) -> None:
         """
+        Constructor
         """
         self.name = name
         self.data = data
@@ -25,11 +32,16 @@ class PDFile:
 
     def __repr__(self) -> str:
         """
+        Returns a representation of instance.
         """
         return '<[ Name: %s, Pages: %i ]>' % (self.name, self.n_pages)
 
 
 class Data:
+    """
+    Responsible for the behavior of PDFile objects, page images, and all
+    necessary application data.
+    """
     # total_pages
     total_pages = 0
     # [ names_pdf ]
@@ -43,6 +55,7 @@ class Data:
 
     def get_images() -> List[fitz.fitz.Pixmap]:
         """
+        Returns all images of PDFile.
         """
         return Data.imagesTK
 
@@ -50,6 +63,7 @@ class Data:
         pdf_names: str
     ) -> None:
         """
+        Sets names of PDF files.
         """
         if pdf_names not in Data.names:
             pdf_names = os.path.basename(pdf_names)
@@ -60,6 +74,7 @@ class Data:
         avoid_duplicates: bool = True
     ) -> None:
         """
+        Adds PDFile object.
         """
         if avoid_duplicates:
             if Data.get_index(pdfileObj.name) == -1:
@@ -76,6 +91,7 @@ class Data:
         image: fitz.fitz.Pixmap
     ) -> None:
         """
+        Adds image of PDF page.
         """
         # if current_name not in Data.images_loaded:
         Data.imagesTK.append(image)
@@ -84,11 +100,13 @@ class Data:
         pdfileObj: PDFile
     ) -> None:
         """
+        Adds the PDFile object name to a list to avoid duplicate images.
         """
         Data.images_loaded.append(os.path.basename(pdfileObj.name))
 
     def collect_images() -> None:
         """
+        Gets all images and populates a list of images from a PDFile object.
         """
         # Data.imagesTK.clear()
         for item in Data.selected:
@@ -101,6 +119,7 @@ class Data:
         pdf_name: str
     ) -> int:
         """
+        Removes PDFile object from the list of its name.
         """
         idx = Data.get_index(pdf_name)
         if idx < 0:
@@ -129,6 +148,7 @@ class Data:
         pdf_name: str
     ) -> int:
         """
+        Gets index of PDFile object.
         """
         idx = -1
         for i in range(len(Data.selected)):
@@ -140,6 +160,7 @@ class Data:
         name: str
     ) -> Union[PDFile, None]:
         """
+        Finds PDFile object from the list.
         """
         indx = Data.get_index(pdf_name=name)
         if indx == -1:
@@ -151,6 +172,7 @@ class Data:
         listKey: list
     ) -> None:
         """
+        Sorts PDFile objects from a list of names.
         """
         sorted_PDF_files = {
                 name: index
@@ -168,6 +190,8 @@ class Data:
 
     def close() -> None:
         """
+        Closes PDFile object data and clears PDFile objects instances from the
+        lists.
         """
         for item in Data.selected:
             item.data.close()
@@ -178,6 +202,9 @@ class Data:
 
     @staticmethod
     def status() -> str:
+        """
+        Returns representation of status of Data class.
+        """
         return '<[ Items: %s, Images: %s, Total Pages: %i ]>' % (
                             len(Data.selected),
                             len(Data.imagesTK),

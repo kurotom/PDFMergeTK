@@ -1,19 +1,29 @@
 # -*- coding: utf-8 -*-
 """
+PyPDFMerge GUI.
+
+'ElementsTK' : holds the Tkinter elements to change language of texts.
+'LanguagesClass' : class in charge of managing the language.
+'LoadImagePDFThread' : class (thread) in charge of loading images of the PDF
+                       page.
+'MainGUI' : main class of app gui.
+'UserListBox' : class in charge displaying the names of all PDF files selected
+                by the user.
+'DisplayCanvas' : class in charge of displaying the images of the PDF pages.
 """
+
 import tkinter as tk
 from tkinter import ttk, Tk
-
-from src.styles import AppStyles
-
 
 from tkinter import filedialog
 
 import os
-import sys
 import subprocess
 
 from threading import Thread, Event
+from queue import Queue
+
+from src.styles import AppStyles
 
 from src.langs import languagesDict
 
@@ -24,21 +34,27 @@ from src.models import (
         Data
     )
 
+from src.configmanager import ConfigManager
+
+
 from typing import Union, Tuple
 
 
-from queue import Queue
-
-
-from time import sleep
+# from time import sleep
 
 
 class ElementsTK:
+    """
+    Holds Tkinter elements, buttons, labels, menu.
+    """
     items = []
     menuItems = []
 
 
 class LanguagesClass:
+    """
+    In charge of managing language of app.
+    """
     lang = 'en'
     language = languagesDict[lang]
 
@@ -46,13 +62,43 @@ class LanguagesClass:
         lang: str
     ) -> None:
         """
+        Update language of app.
         """
         LanguagesClass.lang = lang
         LanguagesClass.language = languagesDict[lang]
 
+    def change_language(
+        lang,
+        adding_files: bool = False
+    ) -> None:
+        """
+        Manages language changes of Tkinter element texts.
+        """
+        LanguagesClass.update(lang)
+
+        for menuItem in ElementsTK.menuItems:
+            item, indexLabel = menuItem
+            for k, label in indexLabel.items():
+                try:
+                    # print(k, label, item.entrycget(k, 'label'))
+                    item.entryconfigure(
+                                k,
+                                label=LanguagesClass.language[label]
+                            )
+                except BaseException:
+                    pass
+
+        for item_dict in ElementsTK.items:
+            for k, itemTK in item_dict.items():
+                # print(k, itemTK, itemTK['text'], LanguagesClass.language[k])
+                itemTK['text'] = LanguagesClass.language[k]
+                if k == 'open' and adding_files:
+                    itemTK['text'] = LanguagesClass.language['add']
+
 
 class LoadImagePDFThread(Thread):
     """
+    Thread in charge of loading images of PDF pages.
     """
     def __init__(
         self,
@@ -64,6 +110,7 @@ class LoadImagePDFThread(Thread):
         is_working: bool
     ) -> None:
         """
+        Constructor
         """
         Thread.__init__(self)
         self.image_height = height
@@ -74,9 +121,9 @@ class LoadImagePDFThread(Thread):
         self.works_queue = works_queue
         self.is_working = is_working
 
-
     def run(self) -> None:
         """
+        Run thread.
         """
         # print('> LoadImagePDF thread - Started')
         self.worker()
@@ -96,6 +143,7 @@ class LoadImagePDFThread(Thread):
 
     def worker(self) -> None:
         """
+        Main work of loading images.
         """
         is_show_canvas = False
         for item in Data.selected:
@@ -134,6 +182,7 @@ class LoadImagePDFThread(Thread):
 
 class MainGUI:
     """
+    Main GUI of app.
     """
 
     def __init__(
@@ -142,19 +191,25 @@ class MainGUI:
         lang: str = 'en'
     ) -> None:
         """
+        Constructor
         """
-        LanguagesClass.lang = lang
+#
+# Load Configuration
+        self.configmanager = ConfigManager()
+        self.language_init = lang
+        LanguagesClass.lang = None
+        self.load_config()
+#
 
 #
-# related to the thread.
+# related to the Thread.
 #
         self.is_working = False
         self.queue_works = Queue()
-
         self.event_thread = Event()
         self.thread_load_image = None
 #
-#
+# related to Styles
         self.app_style = AppStyles()
 #
 #
@@ -201,8 +256,29 @@ class MainGUI:
 
         self.rootGUI.protocol("WM_DELETE_WINDOW", self.on_closing)
 
+    def load_config(self) -> None:
+        """
+        Load configuration of app.
+        """
+        langconfig = self.configmanager.load_config()
+        if langconfig is not None:
+            LanguagesClass.lang = langconfig['lang']
+        else:
+            LanguagesClass.lang = self.language_init
+        LanguagesClass.update(LanguagesClass.lang)
+
+    def save_config(self) -> None:
+        """
+        Save configuration of app.
+        """
+        dict_lang = {
+            'lang': LanguagesClass.lang
+        }
+        self.configmanager.save_config(config=dict_lang)
+
     def menu(self) -> None:
         """
+        Builds and displays the application menu.
         """
         menubar = tk.Menu(
                         self.rootGUI,
@@ -221,12 +297,18 @@ class MainGUI:
         langs_ = tk.Menu(menubar, tearoff=0)
         langs_.add_command(
                     label=LanguagesClass.language['en'],
-                    command=lambda: self.change_language('en'),
+                    command=lambda: LanguagesClass.change_language(
+                                            lang='en',
+                                            adding_files=self.adding_files
+                                        ),
                     font=(AppStyles.default_font, AppStyles.default_size)
                 )
         langs_.add_command(
                     label=LanguagesClass.language['es'],
-                    command=lambda: self.change_language('es'),
+                    command=lambda: LanguagesClass.change_language(
+                                            lang='es',
+                                            adding_files=self.adding_files
+                                        ),
                     font=(AppStyles.default_font, AppStyles.default_size)
                 )
 
@@ -244,34 +326,11 @@ class MainGUI:
         ElementsTK.menuItems.append([langs_, {0: 'en', 1: 'es'}])
         ElementsTK.menuItems.append([menubar, {1: 'file', 2: 'langMenu'}])
 
-    def change_language(self, lang) -> None:
-        """
-        """
-        LanguagesClass.update(lang)
-
-        for menuItem in ElementsTK.menuItems:
-            item, indexLabel = menuItem
-            for k, label in indexLabel.items():
-                try:
-                    # print(k, label, item.entrycget(k, 'label'))
-                    item.entryconfigure(
-                                k,
-                                label=LanguagesClass.language[label]
-                            )
-                except BaseException:
-                    pass
-
-        for item_dict in ElementsTK.items:
-            for k, itemTK in item_dict.items():
-                # print(k, itemTK, itemTK['text'], LanguagesClass.language[k])
-                itemTK['text'] = LanguagesClass.language[k]
-                if k == 'open' and self.adding_files:
-                    itemTK['text'] = LanguagesClass.language['add']
-
     def userInterface(
         self
     ) -> None:
         """
+        Manages open PDF files button.
         """
         self.app_style.buttons()
         self.open_files = ttk.Button(
@@ -282,16 +341,17 @@ class MainGUI:
                             )
 
         self.open_files.place(
-                x=(self.__width_frame_usercontrol / 2) - 62,
+                x=75,
                 y=0,
                 height=30,
-                width=100
+                width=120
             )
 
         ElementsTK.items.append({'open': self.open_files})
 
     def select_pdf_widget(self) -> None:
         """
+        Triggers the Tkinter Dialogs to open PDF files.
         """
         filesPDF = filedialog.askopenfiles(
                     filetypes=[(LanguagesClass.language['files'], "*.pdf")],
@@ -312,6 +372,12 @@ class MainGUI:
 
                 self.displaycanvas.clear_canvas()
 
+
+#
+# NOTE: instead using `Data.selected` use `Queue()` to stores names of pdf
+# files selected using select file dialog tkinter.
+#
+#
                 for item in filesPDF:
                     # print(item)
                     name_pdf = os.path.basename(item.name)
@@ -351,10 +417,10 @@ class MainGUI:
                                         style='ButtonJoinMerge.TButton'
                                     )
                 convert_button.place(
-                            x=(self.__width_frame_usercontrol / 2) - 62,
+                            x=75,
                             y=460,
                             height=30,
-                            width=100
+                            width=120
                         )
 
                 self.listbox_pdf()
@@ -363,6 +429,7 @@ class MainGUI:
 
     def add_files_pdf_button(self) -> None:
         """
+        Changes text from 'open files' to 'add files' of button.
         """
         self.open_files['text'] = LanguagesClass.language['add']
         self.open_files['command'] = self.select_pdf_widget
@@ -370,6 +437,7 @@ class MainGUI:
 
     def save_as(self) -> None:
         """
+        Entry to set name of final PDF file.
         """
         if self.show_save_as:
 
@@ -393,7 +461,7 @@ class MainGUI:
                     width=70
                 )
             self.filename_entry.place(
-                    x=75,
+                    x=80,
                     y=420,
                     height=30,
                     width=self.__width_frame_usercontrol - (105)
@@ -403,6 +471,8 @@ class MainGUI:
 
     def start_merge_pdf(self) -> None:
         """
+        Handles merge PDF files and displays the directory where PDF file is
+        stored.
         """
         filename_output = self.output_filename_pdf_entry.get()
         filename_output = filename_output.replace('.pdf', '')
@@ -436,14 +506,14 @@ class MainGUI:
         file_path: str
     ) -> None:
         """
+        Displays the directory where the PDF file is written.
         """
-        current_plat = sys.platform.lower()
-
-        if current_plat == 'linux':
+        file_path = os.path.dirname(file_path)
+        if self.configmanager.current_platform == 'linux':
             subprocess.run(['xdg-open', file_path])
-        elif current_plat == 'darwin':
+        elif self.configmanager.current_platform == 'darwin':
             subprocess.run(['open', file_path])
-        elif current_plat == 'win32':
+        elif self.configmanager.current_platform == 'win32':
             os.startfile(file_path)
         else:
             # Platform Error.
@@ -451,6 +521,7 @@ class MainGUI:
 
     def listbox_pdf(self) -> None:
         """
+        Instance of UserListBox.
         """
         self.userlistbox = UserListBox(
                             frame=self.frameUserControl,
@@ -462,8 +533,10 @@ class MainGUI:
 
     def on_closing(self):
         """
+        Termination operations before closing app.
         """
         # print('> on_closing - MainGUI')
+        self.save_config()
         if self.thread_load_image is not None:
             self.event_thread.set()
             self.event_thread.clear()
@@ -475,6 +548,7 @@ class MainGUI:
 
 class UserListBox(MainGUI):
     """
+    Class in charge to builds listbox with names of PDF files selected by user.
     """
 
     def __init__(
@@ -486,6 +560,7 @@ class UserListBox(MainGUI):
         style: ttk.Style
     ) -> None:
         """
+        Constructor
         """
         self.index = 0
         self.width = width
@@ -558,10 +633,11 @@ class UserListBox(MainGUI):
 
 # ListBox Place
         self.label_listbox.place(
-                x=0,
+                x=75,
                 y=40,
                 height=30,
-                width=self.width - (30)
+                # width=self.width - (30)
+                width=120
             )
         self.listbox_files.place(
                 x=0,
@@ -607,6 +683,7 @@ class UserListBox(MainGUI):
 
     def up_file_list(self) -> None:
         """
+        Manages behavior of button "up" to change position of name.
         """
         item_index = self.get_item_and_index_selected()
         if item_index is not None:
@@ -622,6 +699,7 @@ class UserListBox(MainGUI):
 
     def down_file_list(self) -> None:
         """
+        Manages behavior of button "down" to change position of name.
         """
         item_index = self.get_item_and_index_selected()
         if item_index is not None:
@@ -637,6 +715,7 @@ class UserListBox(MainGUI):
 
     def delete_pdf_item(self) -> None:
         """
+        Manages the operations of deleting rows from the list.
         """
         item_str, index = self.get_item_and_index_selected()
         # print('delete listbox - ', index, item_str)
@@ -649,6 +728,7 @@ class UserListBox(MainGUI):
 
     def update_entry_filename_save(self) -> None:
         """
+        Update text on Entry element.
         """
         if len(Data.selected) == 0:
             self.entry_filename.set('')
@@ -663,6 +743,7 @@ class UserListBox(MainGUI):
         item_selected: str
     ) -> None:
         """
+        Changes location of elements on list of ListBox element.
         """
         self.listbox_files.delete(position)
         self.listbox_files.insert(new_position, item_selected)
@@ -670,6 +751,7 @@ class UserListBox(MainGUI):
 
     def get_item_and_index_selected(self) -> Union[Tuple[str, int], None]:
         """
+        Gets and returns the selected list item and its position as a tuple.
         """
         try:
             item_selected = self.listbox_files.get(
@@ -682,12 +764,14 @@ class UserListBox(MainGUI):
 
     def get_listbox(self) -> list:
         """
+        Gets and returns all names of elements on list.
         """
         names = self.listbox_files.get(0, 'end')
         return [i.strip() for i in names]
 
     def re_render_canvas(self) -> None:
         """
+        Re-render the canvas element (tk.Canvas), update button index page.
         """
         self.update_entry_filename_save()
 
@@ -700,6 +784,7 @@ class UserListBox(MainGUI):
 
 class DisplayCanvas(MainGUI):
     """
+    Class in charge to displays elements on Canvas.
     """
 
     def __init__(
@@ -710,6 +795,7 @@ class DisplayCanvas(MainGUI):
         style: ttk.Style
     ) -> None:
         """
+        Constructor
         """
         self.mainTk = mainTk
         self.style = style
@@ -736,6 +822,7 @@ class DisplayCanvas(MainGUI):
 
     def show(self) -> None:
         """
+        Builds canvas element.
         """
         self.canvas = tk.Canvas(self.frame, bg='#f7f9f9')
 
@@ -748,6 +835,8 @@ class DisplayCanvas(MainGUI):
 
     def show_buttons(self) -> None:
         """
+        Displays the next and previous buttons for managing images on the
+        canvas.
         """
         if self.is_show_buttons is False:
 
@@ -813,6 +902,8 @@ class DisplayCanvas(MainGUI):
 
     def to_canvas(self) -> None:
         """
+        Handles the behavior of the Canvas element, displaying the image
+        corresponding to the page number.
         """
         self.show_buttons()
 
@@ -847,9 +938,9 @@ class DisplayCanvas(MainGUI):
             self.button_prev.state(['disabled'])
             self.set_index_page_button(index=0)
 
-
     def clear_canvas(self) -> None:
         """
+        Cleans the canvas element.
         """
         self.canvas.delete('all')
 
@@ -858,6 +949,7 @@ class DisplayCanvas(MainGUI):
         event=None
     ) -> None:
         """
+        Handles behavior to show image of page.
         """
         self.button_next.state(['!disabled'])
         self.button_prev.state(['!disabled'])
@@ -875,6 +967,7 @@ class DisplayCanvas(MainGUI):
         event=None
     ) -> None:
         """
+        Handles behavior to show image of page.
         """
         self.button_prev.state(['!disabled'])
         self.button_next.state(['!disabled'])
@@ -892,6 +985,7 @@ class DisplayCanvas(MainGUI):
         index: int = None
     ) -> None:
         """
+        Sets number of current page.
         """
         if index is None:
             self.button_current_page['text'] = '%s' % (self.current_page + 1)

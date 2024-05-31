@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+ReaderPDFImage : in charge to read PDF file and convert data of pages into
+                 images.
 """
 
 import fitz
@@ -9,12 +11,14 @@ from PIL import Image, ImageTk
 
 class ReaderPDFImage:
     """
+    Class in charge of read PDF file and converts data of pages into image.
     """
 
     def read_pdf(
         filename: str = None
     ) -> fitz.fitz.Document:
         """
+        Reads data of PDF file or create a new PDF file.
         """
         if filename is None:
             return fitz.open()
@@ -45,5 +49,3 @@ class ReaderPDFImage:
 
             imageTK = ImageTk.PhotoImage(resized_img)
             yield imageTK
-        #     images.append(imageTK)
-        # return images

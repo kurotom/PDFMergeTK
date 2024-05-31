@@ -4,6 +4,9 @@
 import tkinter as tk
 from tkinter import ttk, Tk
 
+from src.styles import AppStyles
+
+
 from tkinter import filedialog
 
 import os
@@ -22,6 +25,12 @@ from src.models import (
     )
 
 from typing import Union, Tuple
+
+
+from queue import Queue
+
+
+from time import sleep
 
 
 class ElementsTK:
@@ -50,7 +59,9 @@ class LoadImagePDFThread(Thread):
         height: int,
         width: int,
         canvasDisplay: tk.Canvas,
-        event: Event
+        event: Event,
+        works_queue: Queue,
+        is_working: bool
     ) -> None:
         """
         """
@@ -60,17 +71,32 @@ class LoadImagePDFThread(Thread):
         self.canvasDisplay = canvasDisplay
         self.event = event
 
+        self.works_queue = works_queue
+        self.is_working = is_working
+
+
     def run(self) -> None:
         """
         """
-#
-# Nota: arreglar el problema que se genera cuando se ejecuta con varios
-# archivos simultáneamente.
-# Posiblemente un `Queue()` para guardar los nombres
-# y ser ejecutados cuando se termina el `PDFile` actual.
-#
+        # print('> LoadImagePDF thread - Started')
+        self.worker()
+        # self.dumb_test()
+        self.is_working = False
 
-        print('> LoadImagePDF thread - Started')
+    # def dumb_test(self) -> None:
+    #     """
+    #     """
+    #     print('>> ', self.works_queue.qsize())
+    #     name = self.works_queue.get()
+    #     sleep(3)
+    #     print(f'---  {name}  ---')
+    #
+    #     if self.works_queue.qsize() > 0:
+    #         self.dumb_test()
+
+    def worker(self) -> None:
+        """
+        """
         is_show_canvas = False
         for item in Data.selected:
 
@@ -85,6 +111,7 @@ class LoadImagePDFThread(Thread):
                                             height=self.image_height,
                                             width=self.image_width
                                         )
+
                 for image in generator_images:
 
                     if self.event.is_set():
@@ -98,6 +125,11 @@ class LoadImagePDFThread(Thread):
                     if is_show_canvas is False:
                         is_show_canvas = True
                         self.canvasDisplay.to_canvas()
+
+        else:
+            if self.works_queue.qsize() > 0:
+                self.works_queue.get()
+                self.worker()
 
 
 class MainGUI:
@@ -113,14 +145,24 @@ class MainGUI:
         """
         LanguagesClass.lang = lang
 
+#
+# related to the thread.
+#
+        self.is_working = False
+        self.queue_works = Queue()
+
         self.event_thread = Event()
         self.thread_load_image = None
+#
+#
+        self.app_style = AppStyles()
+#
+#
 
         self.height_canvas = 500
         self.width_canvas = 300
         self.image_height = self.height_canvas - 60
         self.image_width = self.width_canvas - 20
-
 
         self.__width_frame_usercontrol = 300
         self.__height_frame_usercontrol = 1
@@ -138,7 +180,8 @@ class MainGUI:
         self.displaycanvas = DisplayCanvas(
                                 mainTk=self.rootGUI,
                                 height_canvas=500,
-                                width_canvas=300
+                                width_canvas=300,
+                                style=self.app_style
                             )
 
         self.menu()
@@ -161,23 +204,30 @@ class MainGUI:
     def menu(self) -> None:
         """
         """
-        menubar = tk.Menu(self.rootGUI)
+        menubar = tk.Menu(
+                        self.rootGUI,
+                        font=(AppStyles.default_font, AppStyles.default_size)
+                    )
+
         self.rootGUI.config(menu=menubar)
 
         quit_ = tk.Menu(menubar, tearoff=0)
         quit_.add_command(
                     label=LanguagesClass.language['quit'],
-                    command=self.rootGUI.destroy
+                    command=self.rootGUI.destroy,
+                    font=(AppStyles.default_font, AppStyles.default_size)
                 )
 
         langs_ = tk.Menu(menubar, tearoff=0)
         langs_.add_command(
                     label=LanguagesClass.language['en'],
-                    command=lambda: self.change_language('en')
+                    command=lambda: self.change_language('en'),
+                    font=(AppStyles.default_font, AppStyles.default_size)
                 )
         langs_.add_command(
                     label=LanguagesClass.language['es'],
-                    command=lambda: self.change_language('es')
+                    command=lambda: self.change_language('es'),
+                    font=(AppStyles.default_font, AppStyles.default_size)
                 )
 
         menubar.add_cascade(
@@ -223,10 +273,12 @@ class MainGUI:
     ) -> None:
         """
         """
+        self.app_style.buttons()
         self.open_files = ttk.Button(
                                 self.frameUserControl,
                                 text=LanguagesClass.language['open'],
-                                command=self.select_pdf_widget
+                                command=self.select_pdf_widget,
+                                style='Button.TButton'
                             )
 
         self.open_files.place(
@@ -268,8 +320,11 @@ class MainGUI:
                                 data=ReaderPDFImage.read_pdf(item.name)
                             )
                     Data.add(pdfileObj=pdfile)
+                    self.queue_works.put(name_pdf)
 
-                self.output_filename_pdf_entry.set(Data.names[0])
+                self.output_filename_pdf_entry.set(
+                        Data.names[0].replace('.pdf', '')
+                    )
 #
 #
 # Load Images PDF - Async
@@ -278,7 +333,9 @@ class MainGUI:
                                             height=self.image_height,
                                             width=self.image_width,
                                             canvasDisplay=self.displaycanvas,
-                                            event=self.event_thread
+                                            event=self.event_thread,
+                                            works_queue=self.queue_works,
+                                            is_working=self.is_working
                                         )
                 self.thread_load_image.daemon = True
                 self.thread_load_image.start()
@@ -290,7 +347,8 @@ class MainGUI:
                 convert_button = ttk.Button(
                                         self.frameUserControl,
                                         text=LanguagesClass.language['join'],
-                                        command=self.start_merge_pdf
+                                        command=self.start_merge_pdf,
+                                        style='ButtonJoinMerge.TButton'
                                     )
                 convert_button.place(
                             x=(self.__width_frame_usercontrol / 2) - 62,
@@ -314,29 +372,34 @@ class MainGUI:
         """
         """
         if self.show_save_as:
-            filename_label = ttk.Label(
+
+            self.filename_label = ttk.Label(
                                     self.frameUserControl,
-                                    text=LanguagesClass.language['name']
-                                )
-            filename_entry = ttk.Entry(
-                                    self.frameUserControl,
-                                    textvariable=self.output_filename_pdf_entry
+                                    text=LanguagesClass.language['name'],
+                                    style='LabelListPDF.TLabel'
                                 )
 
-            filename_label.place(
+            self.filename_entry = ttk.Entry(
+                        self.frameUserControl,
+                        textvariable=self.output_filename_pdf_entry,
+                        font=(AppStyles.default_font, AppStyles.default_size),
+                        style='PDFOutput.TEntry'
+                    )
+
+            self.filename_label.place(
                     x=0,
                     y=420,
                     height=30,
                     width=70
                 )
-            filename_entry.place(
+            self.filename_entry.place(
                     x=75,
                     y=420,
                     height=30,
                     width=self.__width_frame_usercontrol - (105)
                 )
 
-            ElementsTK.items.append({'name': filename_label})
+            ElementsTK.items.append({'name': self.filename_label})
 
     def start_merge_pdf(self) -> None:
         """
@@ -393,7 +456,8 @@ class MainGUI:
                             frame=self.frameUserControl,
                             width=self.__width_frame_usercontrol,
                             entry_filename=self.output_filename_pdf_entry,
-                            displaycanvas=self.displaycanvas
+                            displaycanvas=self.displaycanvas,
+                            style=self.app_style
                         )
 
     def on_closing(self):
@@ -404,6 +468,7 @@ class MainGUI:
             self.event_thread.set()
             self.event_thread.clear()
             self.thread_load_image = None
+            Data.close()
 
         self.rootGUI.destroy()
 
@@ -417,7 +482,8 @@ class UserListBox(MainGUI):
         frame: tk.Frame,
         width: int,
         entry_filename: tk.StringVar,
-        displaycanvas: tk.Canvas
+        displaycanvas: tk.Canvas,
+        style: ttk.Style
     ) -> None:
         """
         """
@@ -427,22 +493,28 @@ class UserListBox(MainGUI):
         self.displaycanvas = displaycanvas
         self.total_index = len(Data.names)
         self.entry_filename = entry_filename
-
-        self.list_pdfs = Data.names
+# Styles
+        self.style = style
+        self.style.labels()
+#
+        self.list_pdfs = [
+            ' %s' % (i)
+            for i in Data.names
+        ]
 
         self.frame = frame
 
         self.label_listbox = ttk.Label(
                                 self.frame,
                                 text=LanguagesClass.language['list'],
-                                justify="center",
-                                anchor=tk.CENTER
+                                style='LabelListbox.TLabel'
                             )
 
         self.choices = tk.StringVar()
         self.listbox_files = tk.Listbox(
                     self.frame,
-                    listvariable=self.choices
+                    listvariable=self.choices,
+                    font=(AppStyles.default_font, AppStyles.default_size)
                 )
         # print('--> ', self.path_pdf_files_dict)
 
@@ -468,17 +540,20 @@ class UserListBox(MainGUI):
         self.up_button = ttk.Button(
                     self.frame,
                     text=u'\u21E7',
-                    command=self.up_file_list
+                    command=self.up_file_list,
+                    style='ButtonController.TButton'
                 )
         self.down_button = ttk.Button(
                     self.frame,
                     text=u'\u21E9',
-                    command=self.down_file_list
+                    command=self.down_file_list,
+                    style='ButtonController.TButton'
                 )
         self.delete_button = ttk.Button(
                     self.frame,
                     text=u'\U0001F5D1',
-                    command=self.delete_pdf_item
+                    command=self.delete_pdf_item,
+                    style='ButtonController.TButton'
                 )
 
 # ListBox Place
@@ -579,7 +654,7 @@ class UserListBox(MainGUI):
             self.entry_filename.set('')
         else:
             name_ = self.listbox_files.get(0, 'end')[0].replace('.pdf', '')
-            self.entry_filename.set(name_)
+            self.entry_filename.set(name_.strip())
 
     def relocate_item(
         self,
@@ -609,7 +684,7 @@ class UserListBox(MainGUI):
         """
         """
         names = self.listbox_files.get(0, 'end')
-        return names
+        return [i.strip() for i in names]
 
     def re_render_canvas(self) -> None:
         """
@@ -626,15 +701,18 @@ class UserListBox(MainGUI):
 class DisplayCanvas(MainGUI):
     """
     """
+
     def __init__(
         self,
         mainTk: Tk,
         height_canvas: int,
-        width_canvas: int
+        width_canvas: int,
+        style: ttk.Style
     ) -> None:
         """
         """
         self.mainTk = mainTk
+        self.style = style
 
         self.frame = ttk.Frame(self.mainTk)
 
@@ -680,13 +758,15 @@ class DisplayCanvas(MainGUI):
             self.button_prev = ttk.Button(
                                         self.frame_buttons,
                                         text=u'\u21E6',
-                                        command=self.prev_page
+                                        command=self.prev_page,
+                                        style='ButtonController.TButton'
                                     )
 
             self.button_current_page = ttk.Button(
                                                 self.frame_buttons,
                                                 text="",
-                                                command=None
+                                                command=None,
+                                                style='IndexButtonPage.TButton'
                                             )
 
             self.button_current_page.state(['disabled'])
@@ -694,7 +774,8 @@ class DisplayCanvas(MainGUI):
             self.button_next = ttk.Button(
                                         self.frame_buttons,
                                         text=u'\u21E8',
-                                        command=self.next_page
+                                        command=self.next_page,
+                                        style='ButtonController.TButton'
                                     )
 
             self.button_delete = ttk.Button(

@@ -38,7 +38,7 @@ class Data:
     selected = []
     # [ fitz.fitz.Pixmap ]
     imagesTK = []
-    #
+    # [ str ]
     images_loaded = []
 
     def get_images() -> List[fitz.fitz.Pixmap]:
@@ -165,6 +165,16 @@ class Data:
         Data.names = [i.name for i in Data.selected]
 
         Data.collect_images()
+
+    def close() -> None:
+        """
+        """
+        for item in Data.selected:
+            item.data.close()
+        Data.names.clear()
+        Data.selected.clear()
+        Data.imagesTK.clear()
+        Data.images_loaded.clear()
 
     @staticmethod
     def status() -> str:

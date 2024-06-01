@@ -24,16 +24,10 @@ from threading import Thread, Event
 from queue import Queue
 
 from src.styles import AppStyles
-
 from src.langs import languagesDict
-
 from src.reader import ReaderPDFImage
-
-from src.models import (
-        PDFile,
-        Data
-    )
-
+from src.models import PDFile
+from src.dataclass import Data
 from src.configmanager import ConfigManager
 
 
@@ -133,12 +127,12 @@ class LoadImagePDFThread(Thread):
     # def dumb_test(self) -> None:
     #     """
     #     """
-    #     print('>> ', self.works_queue.qsize())
+    #     print('>> ', self.works_queue.size())
     #     name = self.works_queue.get()
     #     sleep(3)
     #     print(f'---  {name}  ---')
     #
-    #     if self.works_queue.qsize() > 0:
+    #     if self.works_queue.size() > 0:
     #         self.dumb_test()
 
     def worker(self) -> None:
@@ -146,16 +140,17 @@ class LoadImagePDFThread(Thread):
         Main work of loading images.
         """
         is_show_canvas = False
-        for item in Data.selected:
 
+        pdfile_obj = Data.find(name=self.works_queue.get())
+
+        if pdfile_obj is not None:
             if self.event.is_set():
-                break
-
-            if item.name not in Data.images_loaded:
-                print('==> ', item.name)
-                Data.set_loaded_images_pdfile(pdfileObj=item)
+                return
+            if pdfile_obj.name not in Data.images_loaded:
+                print('==> ', pdfile_obj.name)
+                Data.set_loaded_images_pdfile(pdfileObj=pdfile_obj)
                 generator_images = ReaderPDFImage.to_image(
-                                            pdf_document=item.data,
+                                            pdf_document=pdfile_obj.data,
                                             height=self.image_height,
                                             width=self.image_width
                                         )
@@ -165,19 +160,60 @@ class LoadImagePDFThread(Thread):
                     if self.event.is_set():
                         break
 
-                    item.images.append(image)
+                    pdfile_obj.images.append(image)
                     Data.add_image(
-                                current_name=item.name,
+                                current_name=pdfile_obj.name,
                                 image=image
                             )
                     if is_show_canvas is False:
                         is_show_canvas = True
                         self.canvasDisplay.to_canvas()
 
-        else:
-            if self.works_queue.qsize() > 0:
-                self.works_queue.get()
+            if self.works_queue.size() > 0:
                 self.worker()
+            else:
+                return
+
+
+class TasksQueue(Queue):
+    """
+    Queue of tasks to load images.
+    """
+
+    def __init__(self) -> None:
+        """
+        Constructor
+        """
+        super().__init__()
+        # self.queue = Queue()
+        self.__tasks = set()
+
+    def put(
+        self,
+        pdf_name: str
+    ) -> bool:
+        """
+        Adds PDF name on queue, avoid duplicates.
+        """
+        if pdf_name not in self.__tasks:
+            # self.queue.put(pdf_name)
+            super().put(pdf_name)
+            return True
+        else:
+            return False
+
+    def get(self) -> str:
+        """
+        Returns element from queue.
+        """
+        # return self.queue.get()
+        return super().get()
+
+    def size(self) -> int:
+        """
+        Returns size of queue.
+        """
+        return super().qsize()
 
 
 class MainGUI:
@@ -205,7 +241,8 @@ class MainGUI:
 # related to the Thread.
 #
         self.is_working = False
-        self.queue_works = Queue()
+        # self.queue_works = Queue()
+        self.queue_works = TasksQueue()
         self.event_thread = Event()
         self.thread_load_image = None
 #
@@ -386,7 +423,8 @@ class MainGUI:
                                 data=ReaderPDFImage.read_pdf(item.name)
                             )
                     Data.add(pdfileObj=pdfile)
-                    self.queue_works.put(name_pdf)
+
+                    self.queue_works.put(pdf_name=name_pdf)
 
                 self.output_filename_pdf_entry.set(
                         Data.names[0].replace('.pdf', '')

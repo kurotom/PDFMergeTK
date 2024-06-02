@@ -10,6 +10,9 @@ PyPDFMerge GUI.
 'UserListBox' : class in charge displaying the names of all PDF files selected
                 by the user.
 'DisplayCanvas' : class in charge of displaying the images of the PDF pages.
+'AvoidOpeningThemMultipleTimes' : class in charge of prevent simultaneous
+                                  executions.
+'WarningOpenedApp' : GUI displays warning.
 """
 
 import tkinter as tk
@@ -17,11 +20,17 @@ from tkinter import ttk, Tk
 
 from tkinter import filedialog
 
+from tkinter import messagebox
+
 import os
 import subprocess
 
 from threading import Thread, Event
 from queue import Queue
+
+import locale
+
+import tempfile
 
 from src.styles import AppStyles
 from src.langs import languagesDict
@@ -185,7 +194,6 @@ class TasksQueue(Queue):
         Constructor
         """
         super().__init__()
-        # self.queue = Queue()
         self.__tasks = set()
 
     def put(
@@ -241,7 +249,6 @@ class MainGUI:
 # related to the Thread.
 #
         self.is_working = False
-        # self.queue_works = Queue()
         self.queue_works = TasksQueue()
         self.event_thread = Event()
         self.thread_load_image = None
@@ -298,6 +305,7 @@ class MainGUI:
         Load configuration of app.
         """
         langconfig = self.configmanager.load_config()
+        self.current_configuration = langconfig
         if langconfig is not None:
             LanguagesClass.lang = langconfig['lang']
         else:
@@ -409,12 +417,6 @@ class MainGUI:
 
                 self.displaycanvas.clear_canvas()
 
-
-#
-# NOTE: instead using `Data.selected` use `Queue()` to stores names of pdf
-# files selected using select file dialog tkinter.
-#
-#
                 for item in filesPDF:
                     # print(item)
                     name_pdf = os.path.basename(item.name)
@@ -582,6 +584,12 @@ class MainGUI:
             Data.close()
 
         self.rootGUI.destroy()
+
+    def one_opened_app(self) -> None:
+        """
+        """
+        pass
+
 
 
 class UserListBox(MainGUI):
@@ -1032,12 +1040,71 @@ class DisplayCanvas(MainGUI):
             self.button_current_page['text'] = '%s' % (self.current_page + 1)
 
 
+class AvoidOpeningThemMultipleTimes:
+    """
+    Class in charge of writing a TXT file as an indicator that the application
+    is open and prevent simultaneous executions.
+    """
+    is_open = False
+
+    path_indicator = os.path.join(
+                        tempfile.gettempdir(),
+                        'pypdfmerge.txt'
+                    )
+
+    def check() -> bool:
+        """
+        Checks if file exists.
+        """
+        return os.path.exists(AvoidOpeningThemMultipleTimes.path_indicator)
+
+    def write() -> None:
+        """
+        Writes file.
+        """
+        with open(AvoidOpeningThemMultipleTimes.path_indicator, 'w') as fl:
+            fl.write('open')
+
+    def delete() -> None:
+        """
+        Deletes file.
+        """
+        os.remove(AvoidOpeningThemMultipleTimes.path_indicator)
+
+
+class WarningOpenedApp:
+    """
+    The GUI displays a warning that the application is trying to open twice or
+    more.
+    """
+
+    def show_warning() -> None:
+        """
+        Displays gui warning.
+        """
+        language, encoding = locale.getlocale()
+        LanguagesClass.update(lang=language.split('_')[0])
+        LanguagesClass.language['warning']
+
+        messagebox.showwarning(
+                message=LanguagesClass.language['warning'],
+                title='Warning'
+            )
+
+
 def main() -> None:
     """
     """
-    root = Tk()
-    gui = MainGUI(root)
-    root.mainloop()
+    if AvoidOpeningThemMultipleTimes.check() is False:
+        AvoidOpeningThemMultipleTimes.write()
+
+        root = Tk()
+        gui = MainGUI(root)
+        root.mainloop()
+
+        AvoidOpeningThemMultipleTimes.delete()
+    else:
+        WarningOpenedApp.show_warning()
 
 
 if __name__ == '__main__':

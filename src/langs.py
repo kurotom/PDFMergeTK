@@ -16,7 +16,8 @@ languagesDict = {
         'join': 'Merge',
         'add': 'Add PDFs',
         'name': 'Name',
-        'list': 'List of PDFs'
+        'list': 'List of PDFs',
+        'warning': 'Close the previous application and reopen the program'
     },
     'es': {
         'langMenu': 'Idioma',
@@ -30,6 +31,7 @@ languagesDict = {
         'join': 'Unir',
         'add': 'Agregar PDFs',
         'name': 'Nombre',
-        'list': 'Lista de PDFs'
+        'list': 'Lista de PDFs',
+        'warning': 'Cierre la aplicación anterior y vuelva a abrir el programa'
     }
 }

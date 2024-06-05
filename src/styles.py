@@ -65,17 +65,6 @@ class AppStyles:
             justify='center',
             background=AppStyles.color_background
         )
-        self.__style.configure(
-                'IndexButtonPage.TButton',
-                font=(
-                    AppStyles.default_font,
-                    AppStyles.default_size + 2,
-                    'bold'
-                ),
-                anchor=tk.CENTER,
-                justify='center',
-                background=AppStyles.color_background,
-            )
 
     def labels(self) -> None:
         """
@@ -94,6 +83,20 @@ class AppStyles:
                 anchor=tk.CENTER,
                 justify='center',
                 background=AppStyles.color_background
+            )
+        self.__style.configure(
+                'LabelIndexPage.TLabel',
+                font=(
+                    AppStyles.default_font,
+                    AppStyles.default_size + 2,
+                    'bold'
+                ),
+                anchor=tk.CENTER,
+                justify='center',
+                borderwidth=2,
+                relief=tk.GROOVE,
+                # highlightthickness=0,
+                background=AppStyles.color_background,
             )
 
     def entrys(self) -> None:

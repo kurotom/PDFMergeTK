@@ -997,14 +997,16 @@ class UserListBox(MainGUI):
         """
         Manages the operations of deleting rows from the list.
         """
-        item_str, index = self.get_item_and_index_selected()
-        # print('delete listbox - ', index, item_str)
+        item_index = self.get_item_and_index_selected()
+        if item_index is not None:
+            item_str, index = item_index
+            # print('delete listbox - ', index, item_str)
 
-        self.listbox_files.delete(index)
+            self.listbox_files.delete(index)
 
-        index_deleted = Data.delete(pdf_name=item_str.strip())
+            index_deleted = Data.delete(pdf_name=item_str.strip())
 
-        self.re_render_canvas()
+            self.re_render_canvas()
 
     def update_entry_filename_save(self) -> None:
         """
@@ -1059,6 +1061,10 @@ class UserListBox(MainGUI):
 
         self.canvasdisplay.set_index_page_button()
         self.canvasdisplay.to_canvas()
+
+        if len(self.get_listbox()) == 0:
+            self.canvasdisplay.is_show_buttons = False
+            self.canvasdisplay.hide_buttons()
 
 
 class DisplayCanvas(MainGUI):
@@ -1139,14 +1145,11 @@ class DisplayCanvas(MainGUI):
                                         style='ButtonController.TButton'
                                     )
 
-            self.button_current_page = ttk.Button(
+            self.label_current_page = ttk.Label(
                                                 self.frame_buttons,
                                                 text="",
-                                                command=None,
-                                                style='IndexButtonPage.TButton'
+                                                style='LabelIndexPage.TLabel'
                                             )
-
-            self.button_current_page.state(['disabled'])
 
             self.button_next = ttk.Button(
                                         self.frame_buttons,
@@ -1169,14 +1172,15 @@ class DisplayCanvas(MainGUI):
                                     relwidth=1,
                                     height=40
                                 )
+
             self.button_prev.place(
-                                x=middle_frame - 75,
+                                x=(middle_frame - (55 + (50 / 2))),
                                 y=0,
-                                width=50,
+                                width=55,
                                 # height=30
                                 height=35
                             )
-            self.button_current_page.place(
+            self.label_current_page.place(
                                         x=middle_frame - (50 / 2),
                                         y=0,
                                         width=50,
@@ -1184,12 +1188,18 @@ class DisplayCanvas(MainGUI):
                                         height=35
                                     )
             self.button_next.place(
-                                x=middle_frame + (50 / 2),
+                                x=(middle_frame + 25),
                                 y=0,
-                                width=50,
+                                width=55,
                                 # height=30
                                 height=35
                             )
+
+    def hide_buttons(self) -> None:
+        """
+        Hides the buttons on the canvas.
+        """
+        self.frame_buttons.destroy()
 
     def to_canvas(self) -> None:
         """
@@ -1278,10 +1288,10 @@ class DisplayCanvas(MainGUI):
         Sets number of current page.
         """
         if index is None:
-            self.button_current_page['text'] = '%s' % (self.current_page + 1)
+            self.label_current_page['text'] = '%s' % (self.current_page + 1)
         else:
             self.current_page = index
-            self.button_current_page['text'] = '%s' % (self.current_page + 1)
+            self.label_current_page['text'] = '%s' % (self.current_page + 1)
 
 
 class AvoidOpeningThemMultipleTimes:

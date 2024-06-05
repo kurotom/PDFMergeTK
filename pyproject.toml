@@ -6,12 +6,19 @@ authors = ["kurotom <55354389+kurotom@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [{include = 'src'}]
+classifiers = [
+"Operating System :: OS Independent",
+"Programming Language :: Python :: 3.7",
+"Programming Language :: Python :: 3.8",
+"Programming Language :: Python :: 3.9",
+"Programming Language :: Python :: 3.10",
+"Programming Language :: Python :: 3.11"
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 pillow = "<=10"
 pymupdf = "1.22.5"
-
 
 [build-system]
 requires = ["poetry-core"]

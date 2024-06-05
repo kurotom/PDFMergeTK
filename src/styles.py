@@ -13,15 +13,31 @@ class AppStyles:
     """
     default_font = 'DejaVu Serif'
     default_size = 10
+    canvas_bg = '#f8f8ff'
+    color_background = '#f4f4f4'
+    menu_bg = '#d7d7d7'
+    active_menu = '#f0f0f0'
 
     def __init__(self) -> None:
         """
         Constructor
         """
         self.__style = ttk.Style()
+        self.__style.theme_use('clam')
+
+        self.frame()
         self.entrys()
         self.labels()
         self.entrys()
+
+    def frame(self) -> None:
+        """
+        Style for frames.
+        """
+        self.__style.configure(
+                'FrameStyle.TFrame',
+                background=AppStyles.color_background,
+            )
 
     def buttons(self) -> None:
         """
@@ -31,26 +47,34 @@ class AppStyles:
                 'ButtonController.TButton',
                 font=(AppStyles.default_font, AppStyles.default_size + 5),
                 anchor=tk.CENTER,
-                justify='center'
+                justify='center',
+                background=AppStyles.color_background
             )
 
         self.__style.configure(
                 'Button.TButton',
                 font=(AppStyles.default_font, AppStyles.default_size),
                 anchor=tk.CENTER,
-                justify='center'
+                justify='center',
+                background=AppStyles.color_background
             )
         self.__style.configure(
             'ButtonJoinMerge.TButton',
             font=(AppStyles.default_font, AppStyles.default_size + 1, 'bold'),
             anchor=tk.CENTER,
-            justify='center'
+            justify='center',
+            background=AppStyles.color_background
         )
         self.__style.configure(
                 'IndexButtonPage.TButton',
-                font=(AppStyles.default_font, AppStyles.default_size),
+                font=(
+                    AppStyles.default_font,
+                    AppStyles.default_size + 2,
+                    'bold'
+                ),
                 anchor=tk.CENTER,
-                justify='center'
+                justify='center',
+                background=AppStyles.color_background,
             )
 
     def labels(self) -> None:
@@ -61,13 +85,15 @@ class AppStyles:
                 'LabelListPDF.TLabel',
                 font=(AppStyles.default_font, AppStyles.default_size),
                 anchor=tk.CENTER,
-                justify='center'
+                justify='center',
+                background=AppStyles.color_background
             )
         self.__style.configure(
                 'LabelListbox.TLabel',
                 font=(AppStyles.default_font, AppStyles.default_size, 'bold'),
                 anchor=tk.CENTER,
-                justify="center"
+                justify='center',
+                background=AppStyles.color_background
             )
 
     def entrys(self) -> None:
@@ -79,4 +105,5 @@ class AppStyles:
                 font=(AppStyles.default_font, AppStyles.default_size),
                 padding=(5, 0, 5, 0),
                 anchor=tk.CENTER,
+                background='white'
             )

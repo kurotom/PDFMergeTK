@@ -5,6 +5,17 @@ PyPDFMerge application.
 
 from src.gui import main
 
+from src.gui import (
+    ElementsTK,
+    LanguagesClass,
+    LoadImagePDFThread,
+    MainGUI,
+    UserListBox,
+    DisplayCanvas,
+    AvoidOpeningThemMultipleTimes,
+    WarningOpenedApp
+)
+
 from src.styles import AppStyles
 from src.langs import languagesDict
 from src.reader import ReaderPDFImage

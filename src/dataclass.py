@@ -27,12 +27,6 @@ class Data:
     # [ str ]
     images_loaded = []
 
-    def get_images() -> List[fitz.fitz.Pixmap]:
-        """
-        Returns all images of PDFile.
-        """
-        return Data.imagesTK
-
     def set_names(
         pdf_names: str
     ) -> None:
@@ -40,7 +34,6 @@ class Data:
         Sets names of PDF files.
         """
         if pdf_names not in Data.names:
-            pdf_names = os.path.basename(pdf_names)
             Data.names.append(pdf_names)
 
     def add(
@@ -61,13 +54,11 @@ class Data:
             Data.set_names(pdf_names=pdfileObj.name)
 
     def add_image(
-        current_name: str,
         image: fitz.fitz.Pixmap
     ) -> None:
         """
         Adds image of PDF page.
         """
-        # if current_name not in Data.images_loaded:
         Data.imagesTK.append(image)
 
     def set_loaded_images_pdfile(
@@ -78,24 +69,15 @@ class Data:
         """
         Data.images_loaded.append(os.path.basename(pdfileObj.name))
 
-    def collect_images() -> None:
-        """
-        Gets all images and populates a list of images from a PDFile object.
-        """
-        # Data.imagesTK.clear()
-        for item in Data.selected:
-            print('Data collect_images ', item)
-            if item.name not in Data.images_loaded:
-                Data.images_loaded.append(item.name)
-                Data.imagesTK += item.images
-
     def delete(
         pdf_name: str
     ) -> int:
         """
         Removes PDFile object from the list of its name.
         """
+        # print(Data.images_loaded)
         idx = Data.get_index(pdf_name)
+        # print('---> ', idx)
         if idx < 0:
             return idx
         else:
@@ -103,9 +85,13 @@ class Data:
                 if item.name == pdf_name:
                     Data.selected.pop(idx)
                     Data.names.pop(Data.names.index(pdf_name))
-                    Data.images_loaded.pop(
-                                    Data.images_loaded.index(pdf_name)
-                                )
+                    try:
+                        Data.images_loaded.pop(
+                                        Data.images_loaded.index(pdf_name)
+                                    )
+                    except ValueError:
+                        # print('ValueError')
+                        pass
 
                     Data.total_pages = sum(
                                         [
@@ -126,7 +112,7 @@ class Data:
         """
         idx = -1
         for i in range(len(Data.selected)):
-            if pdf_name == Data.selected[i].name:
+            if pdf_name == os.path.basename(Data.selected[i].name):
                 idx = i
         return idx
 
@@ -148,19 +134,53 @@ class Data:
         """
         Sorts PDFile objects from a list of names.
         """
+        # print()
+        # print(Data.imagesTK)
+        # print(Data.names)
+        # print(Data.selected)
+        # print()
         sorted_PDF_files = {
                 name: index
                 for index, name in enumerate(listKey)
             }
 
-        Data.selected = sorted(
+        new_order = list(
+                        sorted(
                                 Data.selected,
                                 key=lambda x: sorted_PDF_files[x.name]
                             )
+                    )
 
-        Data.names = [i.name for i in Data.selected]
+        Data.selected.clear()
+        Data.selected = new_order
 
+        Data.names.clear()
+        Data.names = [os.path.basename(i.name) for i in Data.selected]
+
+        Data.imagesTK = []
+        Data.images_loaded = []
         Data.collect_images()
+
+    def collect_images() -> None:
+        """
+        Gets all images and populates a list of images from a PDFile object.
+        """
+        # print([i.name for i in Data.selected])
+        # Data.imagesTK.clear()
+        for item in Data.selected:
+            current_name_pdf = os.path.basename(item.name)
+            if current_name_pdf not in Data.images_loaded:
+                # print('Data collect_images ', item, current_name_pdf)
+                Data.images_loaded.append(current_name_pdf)
+                # print(len(Data.imagesTK), len(item.images))
+                Data.imagesTK += item.images
+                # print(len(Data.imagesTK), len(item.images))
+
+    def get_images() -> List[fitz.fitz.Pixmap]:
+        """
+        Returns all images of PDFile.
+        """
+        return Data.imagesTK
 
     def close() -> None:
         """

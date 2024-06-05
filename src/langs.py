@@ -17,7 +17,10 @@ languagesDict = {
         'add': 'Add PDFs',
         'name': 'Name',
         'list': 'List of PDFs',
-        'warning': 'Close the previous application and reopen the program'
+        'warning': 'Close the previous application and reopen the program',
+        'help': 'Help',
+        'about': 'About',
+        'ok': 'Accept'
     },
     'es': {
         'langMenu': 'Idioma',
@@ -32,6 +35,9 @@ languagesDict = {
         'add': 'Agregar PDFs',
         'name': 'Nombre',
         'list': 'Lista de PDFs',
-        'warning': 'Cierre la aplicación anterior y vuelva a abrir el programa'
+        'warning': 'Cierre la aplicación anterior y abra el programa otra vez',
+        'help': 'Ayuda',
+        'about': 'A cerca',
+        'ok': 'Aceptar'
     }
 }

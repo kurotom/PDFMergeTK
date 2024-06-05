@@ -34,7 +34,10 @@ import tempfile
 
 from src.styles import AppStyles
 from src.langs import languagesDict
-from src.reader import ReaderPDFImage
+from src.reader import (
+                    ReaderPDFImage,
+                    ImagesTKGenerator
+                )
 from src.models import PDFile
 from src.dataclass import Data
 from src.configmanager import ConfigManager
@@ -67,8 +70,12 @@ class LanguagesClass:
         """
         Update language of app.
         """
-        LanguagesClass.lang = lang
-        LanguagesClass.language = languagesDict[lang]
+        try:
+            LanguagesClass.lang = lang
+            LanguagesClass.language = languagesDict[lang]
+        except KeyError:
+            LanguagesClass.lang = 'en'
+            LanguagesClass.language = languagesDict[LanguagesClass.lang]
 
     def change_language(
         lang,
@@ -105,8 +112,6 @@ class LoadImagePDFThread(Thread):
     """
     def __init__(
         self,
-        height: int,
-        width: int,
         canvasDisplay: tk.Canvas,
         event: Event,
         works_queue: Queue,
@@ -116,8 +121,6 @@ class LoadImagePDFThread(Thread):
         Constructor
         """
         Thread.__init__(self)
-        self.image_height = height
-        self.image_width = width
         self.canvasDisplay = canvasDisplay
         self.event = event
 
@@ -132,6 +135,7 @@ class LoadImagePDFThread(Thread):
         self.worker()
         # self.dumb_test()
         self.is_working = False
+        # self.canvasDisplay.to_canvas()
 
     # def dumb_test(self) -> None:
     #     """
@@ -148,40 +152,125 @@ class LoadImagePDFThread(Thread):
         """
         Main work of loading images.
         """
-        is_show_canvas = False
+        # print('>> ', self.works_queue.size())
 
-        pdfile_obj = Data.find(name=self.works_queue.get())
+        data_item = self.works_queue.get()
 
-        if pdfile_obj is not None:
-            if self.event.is_set():
-                return
-            if pdfile_obj.name not in Data.images_loaded:
-                print('==> ', pdfile_obj.name)
-                Data.set_loaded_images_pdfile(pdfileObj=pdfile_obj)
-                generator_images = ReaderPDFImage.to_image(
-                                            pdf_document=pdfile_obj.data,
-                                            height=self.image_height,
-                                            width=self.image_width
-                                        )
+        current_object = data_item['object']
 
-                for image in generator_images:
+        for i in data_item['generator']:
+            current_object.images.append(i)
+            Data.add_image(image=i)
+        Data.images_loaded.append(current_object.name)
 
-                    if self.event.is_set():
-                        break
+        # print('---> ', len(Data.imagesTK), current_object)
 
-                    pdfile_obj.images.append(image)
-                    Data.add_image(
-                                current_name=pdfile_obj.name,
-                                image=image
-                            )
-                    if is_show_canvas is False:
-                        is_show_canvas = True
-                        self.canvasDisplay.to_canvas()
+        if self.is_working is False:
+            self.is_working = True
+            self.canvasDisplay.to_canvas()
 
-            if self.works_queue.size() > 0:
-                self.worker()
-            else:
-                return
+        if self.works_queue.size() > 0:
+            self.worker()
+        else:
+            return
+
+#
+        # pdfile_obj = Data.find(name=self.works_queue.get())
+        #
+        # if pdfile_obj is not None:
+        #     if self.event.is_set():
+        #         return
+
+            # print('==> ', pdfile_obj)
+            #
+            # Data.set_loaded_images_pdfile(pdfileObj=pdfile_obj)
+            #
+            # pdfile_obj.images.clear()
+            #
+            # imageTkloader = ImagesTKGenerator(
+            #                             pdfile=pdfile_obj,
+            #                             height=self.image_height,
+            #                             width=self.image_width
+            #                         )
+            # print(imageTkloader)
+            # gen = list(imageTkloader.generator())
+            #
+            # pdfile_obj.images = gen
+            # for i in gen:
+            #     Data.add_image(image=i)
+
+            # for i in gen:
+            #     print(i)
+            #     pdfile_obj.images.append(i)
+            #     # Data.add_image(image=i)
+            #     Data.imagesTK.append(i)
+            # else:
+            #     gen.close()
+
+            # print('==> ', pdfile_obj, len(Data.imagesTK))
+
+            # if self.is_working is False:
+            #     self.is_working = True
+            #     self.canvasDisplay.to_canvas()
+
+            # for image in generator_images:
+            #
+            #     if self.event.is_set():
+            #         break
+            #
+            #     print(pdfile_obj.name, len(pdfile_obj.images))
+            #
+            #     pdfile_obj.images.append(image)
+            #     Data.add_image(image=image)
+            #
+            #     if self.is_working is False:
+            #         self.is_working = True
+            #         self.canvasDisplay.to_canvas()
+            #
+            # print('-->>> ', pdfile_obj)
+
+        # if self.works_queue.size() > 0:
+        #     self.worker()
+        # else:
+        #     return
+
+    # def worker(self) -> None:
+    #     """
+    #     Main work of loading images.
+    #     """
+    #     is_show_canvas = False
+    #
+    #     pdfile_obj = Data.find(name=self.works_queue.get())
+    #
+    #     if pdfile_obj is not None:
+    #         if self.event.is_set():
+    #             return
+    #         if pdfile_obj.name not in Data.images_loaded:
+    #             print('==> ', pdfile_obj.name)
+    #             Data.set_loaded_images_pdfile(pdfileObj=pdfile_obj)
+    #             generator_images = ReaderPDFImage.to_image(
+    #                                         pdf_document=pdfile_obj.data,
+    #                                         height=self.image_height,
+    #                                         width=self.image_width
+    #                                     )
+    #
+    #             for image in generator_images:
+    #
+    #                 if self.event.is_set():
+    #                     break
+    #
+    #                 pdfile_obj.images.append(image)
+    #                 Data.add_image(image=image)
+    #
+    #                 if self.is_working is False:
+    #                     self.is_working = True
+    #                     self.canvasDisplay.to_canvas()
+    #             print('->>> ', pdfile_obj)
+    #
+    #         if self.works_queue.size() > 0:
+    #             self.worker()
+    #         else:
+    #             return
 
 
 class TasksQueue(Queue):
@@ -195,33 +284,60 @@ class TasksQueue(Queue):
         """
         super().__init__()
         self.__tasks = set()
+        # { pdf_name: { 'object': PDFile, 'generator': ImagesTKGenerator } }
+        self.__items = {}
 
     def put(
         self,
-        pdf_name: str
+        pdfile: PDFile,
+        height: int,
+        width: int
     ) -> bool:
         """
-        Adds PDF name on queue, avoid duplicates.
+        Adds PDF name on queue, avoid duplicates. Saves PDFile object and their
+        image generator object.
         """
-        if pdf_name not in self.__tasks:
-            # self.queue.put(pdf_name)
-            super().put(pdf_name)
+        if pdfile.name not in self.__tasks:
+            super().put(pdfile.name)
+
+            imageTkloader = ImagesTKGenerator(
+                                        pdfile=pdfile,
+                                        height=height,
+                                        width=width
+                                    )
+
+            self.__items[pdfile.name] = {
+                    'object': pdfile,
+                    'generator': imageTkloader.generator()
+                }
+
             return True
         else:
             return False
 
     def get(self) -> str:
         """
-        Returns element from queue.
+        Returns ImagesTKGenerator instance and PDFile instance,
+        { 'object': PDFile, 'generator': ImagesTKGenerator }
         """
         # return self.queue.get()
-        return super().get()
+        pdf_name = super().get()
+        return self.__items[pdf_name]
 
     def size(self) -> int:
         """
         Returns size of queue.
         """
         return super().qsize()
+
+    def __str__(self) -> str:
+        """
+        Representation of instance.
+        """
+        return '< TasksQueue - Tasks: %s, Items: %s >' % (
+                                                            len(self.__tasks),
+                                                            len(self.__items)
+                                                        )
 
 
 class MainGUI:
@@ -260,8 +376,8 @@ class MainGUI:
 
         self.height_canvas = 500
         self.width_canvas = 300
-        self.image_height = self.height_canvas - 60
-        self.image_width = self.width_canvas - 20
+        self.image_height = self.height_canvas - 50
+        self.image_width = self.width_canvas - 10
 
         self.__width_frame_usercontrol = 300
         self.__height_frame_usercontrol = 1
@@ -274,7 +390,10 @@ class MainGUI:
 
         self.userlistbox = None
 
-        self.frameUserControl = ttk.Frame(self.rootGUI)
+        self.frameUserControl = ttk.Frame(
+                                        self.rootGUI,
+                                        style='FrameStyle.TFrame'
+                                    )
 
         self.displaycanvas = DisplayCanvas(
                                 mainTk=self.rootGUI,
@@ -327,12 +446,18 @@ class MainGUI:
         """
         menubar = tk.Menu(
                         self.rootGUI,
-                        font=(AppStyles.default_font, AppStyles.default_size)
+                        font=(AppStyles.default_font, AppStyles.default_size),
+                        background=AppStyles.menu_bg,
+                        activebackground=AppStyles.active_menu
                     )
 
         self.rootGUI.config(menu=menubar)
 
-        quit_ = tk.Menu(menubar, tearoff=0)
+        quit_ = tk.Menu(
+                        menubar,
+                        tearoff=0,
+                        activebackground=AppStyles.active_menu
+                    )
         quit_.add_command(
                     label=LanguagesClass.language['quit'],
                     command=self.rootGUI.destroy,
@@ -357,6 +482,13 @@ class MainGUI:
                     font=(AppStyles.default_font, AppStyles.default_size)
                 )
 
+        help_ = tk.Menu(menubar, tearoff=0)
+        help_.add_command(
+                    label=LanguagesClass.language['about'],
+                    command=self.show_about,
+                    font=(AppStyles.default_font, AppStyles.default_size)
+                )
+
         menubar.add_cascade(
                     label=LanguagesClass.language['file'],
                     menu=quit_
@@ -365,11 +497,18 @@ class MainGUI:
                     label=LanguagesClass.language['langMenu'],
                     menu=langs_
                 )
+        menubar.add_cascade(
+                    label=LanguagesClass.language['help'],
+                    menu=help_
+                )
 
         # [item , {index: label}]
         ElementsTK.menuItems.append([quit_, {0: 'quit'}])
         ElementsTK.menuItems.append([langs_, {0: 'en', 1: 'es'}])
-        ElementsTK.menuItems.append([menubar, {1: 'file', 2: 'langMenu'}])
+        ElementsTK.menuItems.append([help_, {0: 'about'}])
+        ElementsTK.menuItems.append(
+                [menubar, {1: 'file', 2: 'langMenu', 3: 'help'}]
+            )
 
     def userInterface(
         self
@@ -415,18 +554,23 @@ class MainGUI:
                 if isinstance(filesPDF, list) is False:
                     filesPDF = [filesPDF]
 
-                self.displaycanvas.clear_canvas()
+                self.displaycanvas.clean_canvas()
 
                 for item in filesPDF:
                     # print(item)
                     name_pdf = os.path.basename(item.name)
                     pdfile = PDFile(
                                 name=name_pdf,
-                                data=ReaderPDFImage.read_pdf(item.name)
+                                data=ReaderPDFImage.read_pdf(item.name),
+                                images=[]
                             )
                     Data.add(pdfileObj=pdfile)
 
-                    self.queue_works.put(pdf_name=name_pdf)
+                    self.queue_works.put(
+                                        pdfile=pdfile,
+                                        height=self.image_height,
+                                        width=self.image_width
+                                    )
 
                 self.output_filename_pdf_entry.set(
                         Data.names[0].replace('.pdf', '')
@@ -436,8 +580,6 @@ class MainGUI:
 # Load Images PDF - Async
                 self.event_thread.clear()
                 self.thread_load_image = LoadImagePDFThread(
-                                            height=self.image_height,
-                                            width=self.image_width,
                                             canvasDisplay=self.displaycanvas,
                                             event=self.event_thread,
                                             works_queue=self.queue_works,
@@ -496,13 +638,13 @@ class MainGUI:
 
             self.filename_label.place(
                     x=0,
-                    y=420,
+                    y=425,
                     height=30,
                     width=70
                 )
             self.filename_entry.place(
                     x=80,
-                    y=420,
+                    y=425,
                     height=30,
                     width=self.__width_frame_usercontrol - (105)
                 )
@@ -567,9 +709,103 @@ class MainGUI:
                             frame=self.frameUserControl,
                             width=self.__width_frame_usercontrol,
                             entry_filename=self.output_filename_pdf_entry,
-                            displaycanvas=self.displaycanvas,
+                            canvasdisplay=self.displaycanvas,
                             style=self.app_style
                         )
+
+    def show_about(self) -> None:
+        """
+        Show about of application.
+        """
+        from src.about import (
+                                name,
+                                line,
+                                link,
+                                license,
+                                author
+                            )
+
+        width_size = 400
+        height_size = 250
+
+        new_window = tk.Toplevel(self.rootGUI)
+        new_window.title(LanguagesClass.language['about'])
+        new_window.geometry('%ix%i' % (width_size, height_size))
+        new_window.configure(background=AppStyles.color_background)
+
+        frame_ = ttk.Frame(
+                        new_window,
+                        style='FrameStyle.TFrame'
+                    )
+
+        close_content_ = '%s %s' % (
+                                u'\u2713',
+                                LanguagesClass.language['ok']
+                            )
+        close_ = ttk.Button(
+                        frame_,
+                        text=close_content_,
+                        command=new_window.destroy,
+                        style='Button.TButton',
+                    )
+
+        text_ = tk.Text(
+                    frame_,
+                    wrap=tk.WORD,
+                    padx=10,
+                    pady=10,
+                    borderwidth=0,
+                    highlightthickness=0,
+                    background=AppStyles.color_background
+                )
+
+        content_ = {
+                    name: 'name_author',
+                    line: 'line',
+                    link: 'line',
+                    license: 'license',
+                    author: 'name_author'
+                }
+
+        for k, v in content_.items():
+            text_.insert(tk.END, k, v)
+
+        text_.tag_config(
+                'line', font=(
+                        AppStyles.default_font,
+                        AppStyles.default_size
+                    ),
+                background=AppStyles.color_background
+            )
+        text_.tag_config(
+                'license', font=(
+                        AppStyles.default_font,
+                        AppStyles.default_size + 1
+                    ),
+                justify='center',
+                background=AppStyles.color_background
+            )
+        text_.tag_config(
+                'name_author', font=(
+                        AppStyles.default_font,
+                        AppStyles.default_size + 1,
+                        'bold'
+                    ),
+                justify='center',
+                background=AppStyles.color_background
+            )
+
+        text_['state'] = 'disabled'
+        text_.bind("<Key>", lambda e: "break")
+
+        text_.place(x=0, y=0, relwidth=1, height=height_size - 50)
+        close_.place(
+                    x=(width_size / 2) - 50,
+                    y=(height_size - 50) + 5,
+                    width=100,
+                    height=35
+                )
+        frame_.place(x=0, y=0, relwidth=1, relheight=1)
 
     def on_closing(self):
         """
@@ -584,12 +820,7 @@ class MainGUI:
             Data.close()
 
         self.rootGUI.destroy()
-
-    def one_opened_app(self) -> None:
-        """
-        """
-        pass
-
+#
 
 
 class UserListBox(MainGUI):
@@ -599,10 +830,10 @@ class UserListBox(MainGUI):
 
     def __init__(
         self,
-        frame: tk.Frame,
+        frame: ttk.Frame,
         width: int,
         entry_filename: tk.StringVar,
-        displaycanvas: tk.Canvas,
+        canvasdisplay: tk.Canvas,
         style: ttk.Style
     ) -> None:
         """
@@ -611,7 +842,7 @@ class UserListBox(MainGUI):
         self.index = 0
         self.width = width
 
-        self.displaycanvas = displaycanvas
+        self.canvasdisplay = canvasdisplay
         self.total_index = len(Data.names)
         self.entry_filename = entry_filename
 # Styles
@@ -709,20 +940,23 @@ class UserListBox(MainGUI):
                 x=0,
                 y=384,
                 width=60,
-                height=30
+                # height=30
+                height=35
             )
         self.down_button.place(
                 x=62,
                 y=384,
                 width=60,
-                height=30
+                # height=30
+                height=35
             )
         self.delete_button.place(
                 # x=(self.width / 2) - 75,
                 x=(self.width - 2) - 90,
                 y=384,
                 width=60,
-                height=30
+                # height=30
+                height=35
             )
 #
         ElementsTK.items.append({'list': self.label_listbox})
@@ -741,7 +975,7 @@ class UserListBox(MainGUI):
                         new_position=new_position,
                         item_selected=item_selected
                     )
-        self.re_render_canvas()
+            self.re_render_canvas()
 
     def down_file_list(self) -> None:
         """
@@ -757,7 +991,7 @@ class UserListBox(MainGUI):
                         new_position=new_position,
                         item_selected=item_selected
                     )
-        self.re_render_canvas()
+            self.re_render_canvas()
 
     def delete_pdf_item(self) -> None:
         """
@@ -768,7 +1002,7 @@ class UserListBox(MainGUI):
 
         self.listbox_files.delete(index)
 
-        index_deleted = Data.delete(pdf_name=item_str)
+        index_deleted = Data.delete(pdf_name=item_str.strip())
 
         self.re_render_canvas()
 
@@ -819,13 +1053,12 @@ class UserListBox(MainGUI):
         """
         Re-render the canvas element (tk.Canvas), update button index page.
         """
+        # print('Re-render')
         self.update_entry_filename_save()
-
         Data.sort(listKey=self.get_listbox())
 
-        self.displaycanvas.clear_canvas()
-        self.displaycanvas.set_index_page_button()
-        self.displaycanvas.to_canvas()
+        self.canvasdisplay.set_index_page_button()
+        self.canvasdisplay.to_canvas()
 
 
 class DisplayCanvas(MainGUI):
@@ -846,7 +1079,10 @@ class DisplayCanvas(MainGUI):
         self.mainTk = mainTk
         self.style = style
 
-        self.frame = ttk.Frame(self.mainTk)
+        self.frame = ttk.Frame(
+                            self.mainTk,
+                            style='FrameStyle.TFrame'
+                        )
 
         self.height_canvas = height_canvas
         self.width_canvas = width_canvas
@@ -870,7 +1106,10 @@ class DisplayCanvas(MainGUI):
         """
         Builds canvas element.
         """
-        self.canvas = tk.Canvas(self.frame, bg='#f7f9f9')
+        self.canvas = tk.Canvas(
+                            self.frame,
+                            background=AppStyles.canvas_bg
+                        )
 
         self.canvas.place(
                         x=0,
@@ -888,7 +1127,10 @@ class DisplayCanvas(MainGUI):
 
             self.is_show_buttons = True
 
-            self.frame_buttons = ttk.Frame(self.frame)
+            self.frame_buttons = ttk.Frame(
+                                        self.frame,
+                                        style='FrameStyle.TFrame'
+                                    )
 
             self.button_prev = ttk.Button(
                                         self.frame_buttons,
@@ -931,19 +1173,22 @@ class DisplayCanvas(MainGUI):
                                 x=middle_frame - 75,
                                 y=0,
                                 width=50,
-                                height=30
+                                # height=30
+                                height=35
                             )
             self.button_current_page.place(
                                         x=middle_frame - (50 / 2),
                                         y=0,
                                         width=50,
-                                        height=30
+                                        # height=30
+                                        height=35
                                     )
             self.button_next.place(
                                 x=middle_frame + (50 / 2),
                                 y=0,
                                 width=50,
-                                height=30
+                                # height=30
+                                height=35
                             )
 
     def to_canvas(self) -> None:
@@ -951,27 +1196,24 @@ class DisplayCanvas(MainGUI):
         Handles the behavior of the Canvas element, displaying the image
         corresponding to the page number.
         """
+
         self.show_buttons()
 
-        self.clear_canvas()
-
-        self.set_index_page_button()
-
-        # print('>> ', Data.total_pages)
+        self.clean_canvas()
+        # print('>> ', Data.status(), self.current_page)
 
         if Data.total_pages > 0:
             try:
-                currentImage = Data.imagesTK[self.current_page]
+                currentImage = Data.get_images()[self.current_page]
             except IndexError:
-                # print('Error Index, Data.imagesTK')
-                # print('-> ', len(Data.imagesTK))
+                # print('Error Index, Data.imagesTK', Data.total_pages)
                 self.current_page = Data.total_pages - 1
-                currentImage = Data.imagesTK[self.current_page]
+                currentImage = Data.get_images()[self.current_page]
 
             # print(Data.status())
 
             self.canvas.image = currentImage
-            self.canvas.create_image(10, 10, image=currentImage, anchor=tk.NW)
+            self.canvas.create_image(5, 5, image=currentImage, anchor=tk.NW)
 
             if self.current_page < Data.total_pages:
                 self.button_next.state(['!disabled'])
@@ -979,12 +1221,14 @@ class DisplayCanvas(MainGUI):
             if self.current_page >= 0:
                 self.button_prev.state(['!disabled'])
 
+            self.set_index_page_button()
+
         else:
             self.button_next.state(['disabled'])
             self.button_prev.state(['disabled'])
             self.set_index_page_button(index=0)
 
-    def clear_canvas(self) -> None:
+    def clean_canvas(self) -> None:
         """
         Cleans the canvas element.
         """
@@ -1095,10 +1339,18 @@ class WarningOpenedApp:
 def main() -> None:
     """
     """
+# # BORRAR    #####################################
+#     try:
+#         AvoidOpeningThemMultipleTimes.delete()
+#     except BaseException:
+#         pass
+# #################################################
+
     if AvoidOpeningThemMultipleTimes.check() is False:
         AvoidOpeningThemMultipleTimes.write()
 
         root = Tk()
+        root.configure(background=AppStyles.color_background)
         gui = MainGUI(root)
         root.mainloop()
 

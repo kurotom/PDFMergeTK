@@ -8,6 +8,8 @@ import fitz
 
 from PIL import Image, ImageTk
 
+from src.models import PDFile
+
 
 class ReaderPDFImage:
     """
@@ -25,16 +27,27 @@ class ReaderPDFImage:
         else:
             return fitz.open(filename, filetype='pdf')
 
-    def to_image(
-        pdf_document: fitz.fitz.Document,
+
+class ImagesTKGenerator:
+
+    def __init__(
+        self,
+        pdfile: PDFile,
         height: int,
         width: int
-    ) -> list:
+    ) -> None:
+        """
+        """
+        self.pdfile = pdfile
+        self.height = height
+        self.width = width
+
+    def generator(self) -> list:
         """
         PDF file page image generator.
         """
         # images = []
-        for page in pdf_document:
+        for page in self.pdfile.data:
             page_pix = page.get_pixmap()
             currentImage = Image.frombytes(
                                     mode='RGB',
@@ -43,9 +56,14 @@ class ReaderPDFImage:
                                 )
 
             resized_img = currentImage.resize(
-                            (width, height),
+                            (self.width, self.height),
                             Image.LANCZOS
                         )
 
             imageTK = ImageTk.PhotoImage(resized_img)
             yield imageTK
+
+    def __repr__(self) -> str:
+        """
+        """
+        return '< %s - image generator %s >' % (self.pdfile.name, id(self))

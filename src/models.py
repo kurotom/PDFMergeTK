@@ -17,7 +17,7 @@ class PDFile:
         self,
         name: str,
         data: fitz.fitz.Document,
-        images: List[fitz.fitz.Pixmap] = []
+        images: List[fitz.fitz.Pixmap]
     ) -> None:
         """
         Constructor
@@ -31,4 +31,8 @@ class PDFile:
         """
         Returns a representation of instance.
         """
-        return '<[ Name: %s, Pages: %i ]>' % (self.name, self.n_pages)
+        return '<[ Name: %s, Pages: %i, Images: %i ]>' % (
+                    self.name,
+                    self.n_pages,
+                    len(self.images)
+                )

@@ -18,7 +18,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.7"
 pillow = "<=10"
-pymupdf = "1.22.5"
+pymupdf = "1.21.1"
 
 [build-system]
 requires = ["poetry-core"]

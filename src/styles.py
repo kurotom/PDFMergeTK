@@ -98,6 +98,28 @@ class AppStyles:
                 # highlightthickness=0,
                 background=AppStyles.color_background,
             )
+        self.__style.configure(
+                'LabelLinkProject.TLabel',
+                font=(
+                    AppStyles.default_font,
+                    AppStyles.default_size - 1,
+                    'bold'
+                ),
+                anchor=tk.CENTER,
+                justify='center',
+                background=AppStyles.color_background,
+            )
+        self.__style.configure(
+                'AuthorLabel.TLabel',
+                font=(
+                    AppStyles.default_font,
+                    AppStyles.default_size + 1,
+                    'bold'
+                ),
+                anchor=tk.CENTER,
+                justify='center',
+                background=AppStyles.color_background,
+            )
 
     def entrys(self) -> None:
         """

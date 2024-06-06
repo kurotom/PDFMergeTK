@@ -724,9 +724,16 @@ class MainGUI:
                                 name,
                                 line,
                                 link,
-                                license,
                                 author
                             )
+        import webbrowser
+
+        def go_to_page_project(event):
+            """
+            Go to home page of project.
+            """
+            page = 'https://github.com/kurotom/PyPDFmerge'
+            webbrowser.open(url=page, new=2, autoraise=True)
 
         width_size = 400
         height_size = 250
@@ -752,7 +759,12 @@ class MainGUI:
                         style='Button.TButton',
                     )
 
-        text_ = tk.Text(
+        text_1 = ttk.Label(
+            frame_,
+            text=name,
+            style='AuthorLabel.TLabel'
+        )
+        text_2 = tk.Text(
                     frame_,
                     wrap=tk.WORD,
                     padx=10,
@@ -761,47 +773,37 @@ class MainGUI:
                     highlightthickness=0,
                     background=AppStyles.color_background
                 )
-
-        content_ = {
-                    name: 'name_author',
-                    line: 'line',
-                    link: 'line',
-                    license: 'license',
-                    author: 'name_author'
-                }
-
-        for k, v in content_.items():
-            text_.insert(tk.END, k, v)
-
-        text_.tag_config(
+        text_2.insert(tk.END, line, 'line')
+        text_2['state'] = 'disabled'
+        text_2.bind("<Key>", lambda e: "break")
+        text_2.tag_config(
                 'line', font=(
                         AppStyles.default_font,
                         AppStyles.default_size
                     ),
-                background=AppStyles.color_background
-            )
-        text_.tag_config(
-                'license', font=(
-                        AppStyles.default_font,
-                        AppStyles.default_size - 1
-                    ),
-                justify='center',
-                background=AppStyles.color_background
-            )
-        text_.tag_config(
-                'name_author', font=(
-                        AppStyles.default_font,
-                        AppStyles.default_size + 1,
-                        'bold'
-                    ),
-                justify='center',
-                background=AppStyles.color_background
+                background=AppStyles.color_background,
+                justify='center'
             )
 
-        text_['state'] = 'disabled'
-        text_.bind("<Key>", lambda e: "break")
+        text_3 = ttk.Label(
+                    frame_,
+                    text=link,
+                    style='LabelLinkProject.TLabel'
+                )
+        text_4 = ttk.Label(
+                    frame_,
+                    text=author,
+                    style='AuthorLabel.TLabel'
+                )
 
-        text_.place(x=0, y=0, relwidth=1, height=height_size - 50)
+        text_1.place(x=0, y=0, relwidth=1, height=30)
+        text_2.place(x=0, y=30, relwidth=1, height=90)
+        text_3.place(x=0, y=120, relwidth=1, height=30)
+        text_4.place(x=0, y=160, relwidth=1, height=30)
+
+        text_3.configure(cursor='hand2')
+        text_3.bind("<Button-1>", go_to_page_project)
+
         close_.place(
                     x=(width_size / 2) - 50,
                     y=(height_size - 50) + 5,

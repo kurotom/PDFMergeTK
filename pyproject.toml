@@ -26,3 +26,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 mergepdf = 'src.gui:main'
+mergepdfreset = 'src.reset:main'

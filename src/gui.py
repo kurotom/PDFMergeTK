@@ -28,6 +28,8 @@ import subprocess
 from threading import Thread, Event
 from queue import Queue
 
+from time import sleep
+
 import locale
 
 import tempfile
@@ -44,9 +46,6 @@ from src.configmanager import ConfigManager
 
 
 from typing import Union, Tuple
-
-
-# from time import sleep
 
 
 class ElementsTK:
@@ -656,32 +655,36 @@ class MainGUI:
         Handles merge PDF files and displays the directory where PDF file is
         stored.
         """
-        filename_output = self.output_filename_pdf_entry.get()
-        filename_output = filename_output.replace('.pdf', '')
-        filename_output = '%s.pdf' % (filename_output)
-        file_save_path = '%s%s%s' % (
-                            os.path.expanduser('~'),
-                            os.path.sep,
-                            filename_output
-                        )
-
         sorted_files_pdf = self.userlistbox.get_listbox()
+        if len(sorted_files_pdf) > 0:
+            filename_output = self.output_filename_pdf_entry.get()
+            filename_output = filename_output.replace('.pdf', '')
+            filename_output = '%s.pdf' % (filename_output)
+            file_save_path = '%s%s%s' % (
+                                os.path.expanduser('~'),
+                                os.path.sep,
+                                filename_output
+                            )
 
-        first_pdf = sorted_files_pdf[0]
-        pdf_object = Data.find(name=first_pdf)
-        first_pdf_data = pdf_object.data
+            sorted_files_pdf = self.userlistbox.get_listbox()
 
-        file_save_path_data = ReaderPDFImage.read_pdf()
+            first_pdf = sorted_files_pdf[0]
+            pdf_object = Data.find(name=first_pdf)
+            first_pdf_data = pdf_object.data
 
-        for pdfile_name in sorted_files_pdf[1:]:
-            pdfObj = Data.find(name=pdfile_name)
-            first_pdf_data.insert_pdf(pdfObj.data)
+            file_save_path_data = ReaderPDFImage.read_pdf()
 
-        file_save_path_data.insert_pdf(first_pdf_data)
+            for pdfile_name in sorted_files_pdf[1:]:
+                pdfObj = Data.find(name=pdfile_name)
+                first_pdf_data.insert_pdf(pdfObj.data)
 
-        file_save_path_data.save(file_save_path)
+            file_save_path_data.insert_pdf(first_pdf_data)
 
-        self.show_directory_file_merged(file_path=file_save_path)
+            file_save_path_data.save(file_save_path)
+
+            sleep(0.3)
+
+            self.show_directory_file_merged(file_path=file_save_path)
 
     def show_directory_file_merged(
         self,
@@ -780,7 +783,7 @@ class MainGUI:
         text_.tag_config(
                 'license', font=(
                         AppStyles.default_font,
-                        AppStyles.default_size + 1
+                        AppStyles.default_size - 1
                     ),
                 justify='center',
                 background=AppStyles.color_background
@@ -1355,6 +1358,7 @@ def main() -> None:
 #     except BaseException:
 #         pass
 # #################################################
+    # AvoidOpeningThemMultipleTimes.write()
 
     if AvoidOpeningThemMultipleTimes.check() is False:
         AvoidOpeningThemMultipleTimes.write()

@@ -5,3 +5,5 @@ src/ignored_files
 dist/
 build/
 *.spec
+.github/workflows/build0.yml
+pyproject0.toml

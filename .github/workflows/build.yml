@@ -1,56 +1,197 @@
 name: Build Executables
 
-on: [push]
+on:
+  push:
+    tags:
+      - '*'
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.11.9'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller
+          python -m pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
+          pip install pyinstaller
 
       - name: Build executable
-        run: pyinstaller --onefile --windowed src/__main__.py --name PyMerge
+        run: pyinstaller --onefile --windowed src/__main__.py --name PDFMergeTK
 
       - name: Upload executable
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: linux-executable
-          path: dist/PyMerge
+          path: dist/PDFMergeTK
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v0.1.1-linux
+          release_name: PDFMergeTK Linux Release v0.1.1-linux
+          draft: false
+          prerelease: false
+
+      - name: Upload binary to GitHub Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/PDFMergeTK
+          asset_name: PDFMergeTK
+          asset_content_type: application/octet-stream
+
+      - name: Generate Hash bin PDFMergeTK
+        shell: bash
+        id: generate_hash
+        run: |
+          sha256sum ./dist/PDFMergeTK > hash.txt
+          cat hash.txt
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Checkout main branch
+        run: git checkout main
+
+      - name: Delete olders releases and hash SHA256
+        run: sed -z s'/\* \[Download latest PDFMergeTK - Linux\].*//g' README.md -i README.md
+
+      - name: Upload README.md
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # RUN_ID=${{ github.run_id }}
+          # REPO=${{ github.repository }}
+          # ARTIFACT_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
+          # RELEASE_URL="https://github.com/${{ github.repository }}/releases/latest/download/PDFMergeTK"
+          # RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ github.run_number }}-linux/PDFMergeTK"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.1-linux/PDFMergeTK"
+          HASH=$(cat hash.txt | awk '{print $1}')
+
+          # Pull changes
+          git pull origin main
+
+          # Adds link
+          echo -e "* [Download latest PDFMergeTK - Linux](${RELEASE_URL})\n" >> README.md
+          echo -e "  SHA256: ${HASH}\n\n" >> README.md
+
+          # Push and commit changes README.md
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          #
+          git add README.md
+          git commit -m "Update README with artifact link - Linux v0.1.1"
+          git push origin main --force
 
   build-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.11.9'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller
+          python -m pip install --upgrade pip setuptools wheel
           pip install -r requirements.txt
+          pip install pyinstaller
+          echo "-------"
+          pip list | grep -i pyinstaller
+          echo "-------"
 
       - name: Build executable
-        run: pyinstaller --onefile --windowed src/__main__.py --name PyMerge
+        run: pyinstaller --onefile --windowed src/__main__.py --name PDFMergeTK.exe
 
       - name: Upload executable
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: windows-executable
-          path: dist/PyMerge.exe
+          path: dist/PDFMergeTK.exe
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # tag_name: v${{ github.run_number }}-windows
+          tag_name: v0.1.1-windows
+          # release_name: PDFMergeTK Windows Release ${{ github.run_number }}-windows
+          release_name: PDFMergeTK Windows Release v0.1.1-windows
+          draft: false
+          prerelease: false
+
+      - name: Upload binary to GitHub Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dist/PDFMergeTK.exe
+          asset_name: PDFMergeTK.exe
+          asset_content_type: application/octet-stream
+
+      - name: Generate Hash bin PDFMergeTK
+        shell: bash
+        id: generate_hash
+        run: |
+          sha256sum ./dist/PDFMergeTK.exe > hash.txt
+          cat hash.txt
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Checkout main branch
+        run: git checkout main
+
+      - name: Upload README.md
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # RUN_ID=${{ github.run_id }}
+          # REPO=${{ github.repository }}
+          # ARTIFACT_URL="https://github.com/${REPO}/actions/runs/${RUN_ID}"
+          # RELEASE_URL="https://github.com/${{ github.repository }}/releases/latest/download/PDFMergeTK.exe"
+          # RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v${{ github.run_number }}-windows/PDFMergeTK.exe"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.1-windows/PDFMergeTK.exe"
+          HASH=$(cat hash.txt | awk '{print $1}')
+
+          #
+          git pull origin main
+
+          # adds link
+          echo -e "* [Download latest PDFMergeTK - Windows](${RELEASE_URL})\n" >> README.md
+          echo -e "  SHA256: ${HASH}\n\n" >> README.md
+
+          # push and commit changes README.md
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          #
+          git add README.md
+          git commit -m "Update README with artifact link - Windows v0.1.1"
+          git push origin main --force

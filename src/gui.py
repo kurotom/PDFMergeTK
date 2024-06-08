@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PyPDFMerge GUI.
+PDFMergeTK GUI.
 
 'ElementsTK' : holds the Tkinter elements to change language of texts.
 'LanguagesClass' : class in charge of managing the language.
@@ -732,7 +732,7 @@ class MainGUI:
             """
             Go to home page of project.
             """
-            page = 'https://github.com/kurotom/PyPDFmerge'
+            page = 'https://github.com/kurotom/PDFMergeTK'
             webbrowser.open(url=page, new=2, autoraise=True)
 
         width_size = 400
@@ -1308,7 +1308,7 @@ class AvoidOpeningThemMultipleTimes:
 
     path_indicator = os.path.join(
                         tempfile.gettempdir(),
-                        'pypdfmerge.txt'
+                        'PDFMergeTK.txt'
                     )
 
     def check() -> bool:

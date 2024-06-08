@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PyPDFMerge application.
+PDFMergeTK application.
 """
 
 from src.gui import main

@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "pypdfmerge"
-version = "0.1.0"
+name = "pdfmergetk"
+version = "0.1.1"
 description = "Merge pdf easily with power of Python."
 authors = ["kurotom <55354389+kurotom@users.noreply.github.com>"]
 license = "MIT"

@@ -15,7 +15,7 @@ class ConfigManager:
     """
     In charge to load, save configuration of app.
     """
-    app = 'pypdfmerge'
+    app = 'pdfmergetk'
     file = 'appconfig.json'
 
     def __init__(self) -> None:

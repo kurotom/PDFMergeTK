@@ -741,6 +741,7 @@ class MainGUI:
         new_window = tk.Toplevel(self.rootGUI)
         new_window.title(LanguagesClass.language['about'])
         new_window.geometry('%ix%i' % (width_size, height_size))
+        new_window.resizable(False, False)
         new_window.configure(background=AppStyles.color_background)
 
         frame_ = ttk.Frame(

@@ -45,21 +45,12 @@ build_requirements () {
 git_new_tag () {
   status_check_code
 
-  # CURRENT_TAG_Linux="v$1-linux"
-  # CURRENT_TAG_Windows="v$1-windows"
-  # MESSAGE_Linux="$CURRENT_TAG $(date +"%D %H:%M:%S.%N")"
-  # MESSAGE_Windows="$CURRENT_TAG $(date +"%D %H:%M:%S.%N")"
   CURRENT_TAG="v$1"
   MESSAGE="$CURRENT_TAG $(date +"%D %H:%M:%S.%N")"
+
   echo "Creating new tag - $CURRENT_TAG"
 
-  # git tag -a $CURRENT_TAG_Linux -m "$MESSAGE_Linux"
-  # git tag -a $CURRENT_TAG_Windows -m "$MESSAGE_Windows"
-
   git tag -a $CURRENT_TAG -m "$MESSAGE"
-
-  # git push origin $CURRENT_TAG_Linux
-  # git push origin $CURRENT_TAG_Windows
 
   git push origin $CURRENT_TAG
 
@@ -107,10 +98,7 @@ if [ $# -eq 1 ] || [ $# -eq 2 ]; then
 
   if [ $STATUS == 0 ]; then
 
-    echo "---- $STATUS"
-    echo $NEW_VERSION_TAG "-$COMMIT_PUSH-"
-
-    echo "New version: $NEW_VERSION_TAG"
+    echo -e "\nTag: $NEW_VERSION_TAG, Commit: $COMMIT_PUSH\n"
 
     change_tag_build_yaml $NEW_VERSION_TAG
 

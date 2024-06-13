@@ -76,13 +76,7 @@ jobs:
           API_KEY: ${{ secrets.API_KEY_VT_ }}
         run: |
             API_KEY_=$(echo ${{ secrets.API_KEY_VT_ }} | base64 -d)
-
             python utils/to_virustotal.py dist/PDFMergeTK $API_KEY_
-
-            cat link_vtt.txt
-
-            # LINK_FILE_VIRUSTOTAL_Linux=$(python ./utils/to_virustotal.py ./dist/PDFMergeTK $API_KEY_)
-            # echo "LINK_FILE_VIRUSTOTAL_Linux=$LINK_FILE_VIRUSTOTAL_Linux" >> $GITHUB_ENV
 
       - name: Fetch all branches
         run: git fetch --all
@@ -106,6 +100,7 @@ jobs:
           git pull origin main
 
           # Adds link
+          echo "\n" >> README.md
           echo -e "* [Download latest PDFMergeTK - Linux](${RELEASE_URL})\n" >> README.md
           echo -e "  SHA256: ${HASH}\n" >> README.md
           echo -e "  [Virustotal.com scan latest version]($FIRST_LINK)\n\n" >> README.md
@@ -215,8 +210,6 @@ jobs:
         run: |
             API_KEY_=$(echo ${{ secrets.API_KEY_VT_ }} | base64 -d)
             python utils/to_virustotal.py dist/PDFMergeTK.exe $API_KEY_
-            # LINK_FILE_VIRUSTOTAL_Linux=$(python ./utils/to_virustotal.py ./dist/PDFMergeTK "${API_KEY_}" linux)
-            # echo "LINK_FILE_VIRUSTOTAL_Linux=${LINK_FILE_VIRUSTOTAL_Linux}" >> $GITHUB_ENV
 
       - name: Fetch all branches
         run: git fetch --all

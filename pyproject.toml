@@ -10,6 +10,7 @@ repository = "https://github.com/kurotom/PDFMergeTK"
 keywords = ["merge pdf", "gui", "tk", "desktop", "gui windows", "gui linux"]
 classifiers = [
 "Operating System :: OS Independent",
+"Topic :: Desktop Environment",
 "Programming Language :: Python :: 3.7",
 "Programming Language :: Python :: 3.8",
 "Programming Language :: Python :: 3.9",

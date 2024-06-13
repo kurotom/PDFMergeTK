@@ -45,3 +45,17 @@ $ python src
 ```
 
 # Download executable for Linux or Windows
+* [Download latest PDFMergeTK - Linux](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.0-linux/PDFMergeTK)
+
+  SHA256: 0475efffc4a615fd7b5dee111987a003cde82f5ec9a6a1a913465d1b41ee2fa6
+
+  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/0475efffc4a615fd7b5dee111987a003cde82f5ec9a6a1a913465d1b41ee2fa6/detection)
+
+
+* [Download latest PDFMergeTK - Windows](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.0-windows/PDFMergeTK.exe)
+
+  SHA256: 84f0548ef5394d33dbdea38c1cd0cb5de21313f8f1bc9febb0e23d166984a2ad
+
+  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/84f0548ef5394d33dbdea38c1cd0cb5de21313f8f1bc9febb0e23d166984a2ad/detection)
+
+

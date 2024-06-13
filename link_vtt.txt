@@ -1,3 +1,0 @@
-https://www.virustotal.com/gui/file/0cc2edec3e5bad290c86724abaddec6482bf6b3a9adc7d424c7f1cd66b88a210/detection
-https://www.virustotal.com/gui/file/38530f6792c0dd50a094e0235713b22953f6ff16/detection
-https://www.virustotal.com/gui/file/6610498e862f7f2ced1a3170b8cce41b/detection

@@ -44,4 +44,17 @@ $ poetry install
 $ python src
 ```
 
-# Download executable for Linux or Windows
+# Download executable for Linux or Windows.
+
+* [Download latest PDFMergeTK - Linux](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.0-linux/PDFMergeTK)
+
+  SHA256: 0475efffc4a615fd7b5dee111987a003cde82f5ec9a6a1a913465d1b41ee2fa6
+
+  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/0475efffc4a615fd7b5dee111987a003cde82f5ec9a6a1a913465d1b41ee2fa6/detection)
+
+
+* [Download latest PDFMergeTK - Windows](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.0-windows/PDFMergeTK.exe)
+
+  SHA256: 562f73f6f9648afa564adead9e534377269cd742c584b23b3a7241bb342d0ca3
+
+  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/562f73f6f9648afa564adead9e534377269cd742c584b23b3a7241bb342d0ca3/detection)

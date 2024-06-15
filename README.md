@@ -36,7 +36,8 @@ Running using CLI
 $ mergepdf
 ```
 
-A `.desktop` file will be created in the location `~/.local/share/applications/`.
+* Linux : a `.desktop` file will be created in the location `~/.local/share/applications/`.
+* Windows : a shortcut will be generated on the current user's desktop.
 
 
 ## From Github, clone project

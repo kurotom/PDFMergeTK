@@ -43,14 +43,20 @@ class ConfigManager:
                             "Application Support",
                             ConfigManager.app
                         )
+
+            self.set_config_path(config=path_config)
             # creates shortcut to run app gui using a command
             # `mergepdf` or run script python.
+
         elif self.current_platform == 'linux':
             path_config = os.path.join(
                             os.path.expanduser('~'),
                             ".config",
                             ConfigManager.app
                         )
+
+            self.set_config_path(config=path_config)
+
             result = LinuxEnvironment.check_system_daemon()
             if result:
                 LinuxEnvironment.create_desktop_file()
@@ -60,6 +66,8 @@ class ConfigManager:
                             os.getenv('LOCALAPPDATA'),
                             ConfigManager.app
                         )
+
+            self.set_config_path(config=path_config)
 
             run_path = os.path.join(path_config, ConfigManager.runfile)
 
@@ -76,7 +84,14 @@ class ConfigManager:
             # Platform Error.
             path_config = None
 
-        self.path_config = path_config
+
+    def set_config_path(
+        self,
+        config: str
+    ) -> None:
+        """
+        """
+        self.path_config = config
         self.path_config_file = os.path.join(
                                     self.path_config,
                                     ConfigManager.file
@@ -132,7 +147,7 @@ class WindowsEnvironment:
             %s.gui.main()
         """ % (name_app, name_app)
         if not os.path.exists(file_runnable_path):
-            with open(file_runnable_path) as fl:
+            with open(file_runnable_path, 'w') as fl:
                 fl.writelines(string)
 
     def make_shortcut(

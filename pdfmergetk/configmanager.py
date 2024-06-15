@@ -133,7 +133,11 @@ class ConfigManager:
 class WindowsEnvironment:
     """
     """
-    python_path_exec = sys.executable
+    pythonw_base_dir = os.path.dirname(sys.executable)
+    pythonw_path_exec = os.path.join(
+                            pythonw_base_dir,
+                            'pythonw.exe'
+                        )
 
     def make_file_run(
         name_app: str,
@@ -142,9 +146,9 @@ class WindowsEnvironment:
         """
         """
         string = """
-        import %s\n
-        if __name__ == '__main__':\n
-            %s.gui.main()
+import %s
+if __name__ == '__main__':\n
+    %s.gui.main()
         """ % (name_app, name_app)
         if not os.path.exists(file_runnable_path):
             with open(file_runnable_path, 'w') as fl:
@@ -164,9 +168,9 @@ class WindowsEnvironment:
 
         shell = Dispatch('WScript.Shell')
         shortcut = shell.CreateShortCut(link_path)
-        shortcut.TargetPath = WindowsEnvironment.python_path_exec
+        shortcut.TargetPath = WindowsEnvironment.pythonw_path_exec
         shortcut.Arguments = script_path
-        # shortcut.WorkingDirectory = r"C:\path\to\your"
+        shortcut.WorkingDirectory = WindowsEnvironment.pythonw_base_dir
         # shortcut.IconLocation = r"C:\path\to\your\icon.ico"  # Optional: specify an icon
         shortcut.save()
 
@@ -199,14 +203,14 @@ class LinuxEnvironment:
         """
         """
         file_desktop = """\
-        [Desktop Entry]
-        Name=PDFMergeTK
-        Comment=Merge PDFs
-        Exec=mergepdf
-        Terminal=false
-        StartupNotify=true
-        Type=Application
-        Categories=Utility;
+[Desktop Entry]
+Name=PDFMergeTK
+Comment=Merge PDFs
+Exec=mergepdf
+Terminal=false
+StartupNotify=true
+Type=Application
+Categories=Utility;
         """
         name_file = 'PDFMergeTK.desktop'
         path_ = os.path.join(LinuxEnvironment.path_desktop_file, name_file)

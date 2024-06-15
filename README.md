@@ -30,6 +30,15 @@ You can install this project in several ways.
 $ pip install pdfmergetk
 ```
 
+Running using CLI
+
+```bash
+$ mergepdf
+```
+
+A `.desktop` file will be created in the location `~/.local/share/applications/`.
+
+
 ## From Github, clone project
 
 ```bash
@@ -57,5 +66,3 @@ $ python src
   SHA256: 84f0548ef5394d33dbdea38c1cd0cb5de21313f8f1bc9febb0e23d166984a2ad
 
   [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/84f0548ef5394d33dbdea38c1cd0cb5de21313f8f1bc9febb0e23d166984a2ad/detection)
-
-

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
+Thread related to antivirus, pyinstaller, and false positives.
 
+https://github.com/pyinstaller/pyinstaller/issues/5579
 """
 
 import pefile

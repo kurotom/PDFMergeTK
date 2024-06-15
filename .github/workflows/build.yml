@@ -102,7 +102,7 @@ jobs:
           # Adds link
           echo "\n" >> README.md
           echo -e "* [Download latest PDFMergeTK - Linux](${RELEASE_URL})\n" >> README.md
-          echo -e "  SHA256: ${HASH}\n" >> README.md
+          echo -e "  SHA256: ${HASH}" >> README.md
           echo -e "  [Virustotal.com scan latest version]($FIRST_LINK)\n\n" >> README.md
 
           # Push and commit changes README.md
@@ -231,7 +231,7 @@ jobs:
 
           # Adds link download
           echo -e "* [Download latest PDFMergeTK - Windows](${RELEASE_URL})\n" >> README.md
-          echo -e "  SHA256: ${HASH}\n" >> README.md
+          echo -e "  SHA256: ${HASH}" >> README.md
           echo -e "  [Virustotal.com scan latest version]($FIRST_LINK)\n\n" >> README.md
 
           # push and commit changes README.md

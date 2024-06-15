@@ -1,10 +1,17 @@
 #!/bin/bash
+#
+# script to manage versions and comments used for `git tag`, `build.yml` file
+# for Github Actions, `pyproject.toml` file used by `poetry` for the current
+# project.
+#
+#
 YAML_FILE='.github/workflows/build.yml'
 PYPROJECT_TOML='pyproject.toml'
 STATUS=0
 
 
 check_version_input () {
+  # check version tag
   res=$(echo $NEW_VERSION_TAG | grep -e [0-9]\.[0-9]\.[0-9])
   if [[ ! -z $res ]]; then
     STATUS=0
@@ -16,6 +23,7 @@ check_version_input () {
 }
 
 change_tag_build_yaml () {
+  # changes version on YAML file
   status_check_code
 
   echo "File:  $YAML_FILE"
@@ -25,6 +33,7 @@ change_tag_build_yaml () {
 }
 
 change_version_pyproject () {
+  # change version of TOML file
   status_check_code
 
   echo "File:  $PYPROJECT_TOML"
@@ -34,6 +43,7 @@ change_version_pyproject () {
 }
 
 build_requirements () {
+  # generates requirements.txt
   status_check_code
 
   echo "Get related Python packages, requirements.txt".
@@ -43,6 +53,7 @@ build_requirements () {
 }
 
 git_new_tag () {
+  # git create tag and push
   status_check_code
 
   CURRENT_TAG="v$1"
@@ -58,6 +69,7 @@ git_new_tag () {
 }
 
 git_push_changes_repository () {
+  # adds, commits and push changes
   status_check_code
 
   echo "git_push_changes_repository - $NEW_VERSION_TAG"
@@ -75,6 +87,8 @@ git_push_changes_repository () {
 }
 
 status_get_exit_code () {
+  # checks status code of last command and
+  # sets status for this scripts.
   if [ $? == 0 ]; then
     STATUS=0
   else
@@ -83,12 +97,16 @@ status_get_exit_code () {
 }
 
 status_check_code () {
+  # checks STATUS of script and sets exit code
   if [ $STATUS == 1 ]; then
     exit 1
   fi
 }
 
 
+#
+# main code
+#
 if [ $# -eq 1 ] || [ $# -eq 2 ]; then
 
   NEW_VERSION_TAG="$1"

@@ -44,7 +44,7 @@ class ConfigManager:
                             ConfigManager.app
                         )
 
-            self.set_config_path(config=path_config)
+            # self.set_config_path(config=path_config)
             # creates shortcut to run app gui using a command
             # `mergepdf` or run script python.
 
@@ -55,11 +55,11 @@ class ConfigManager:
                             ConfigManager.app
                         )
 
-            self.set_config_path(config=path_config)
+            # self.set_config_path(config=path_config)
 
-            result = LinuxEnvironment.check_system_daemon()
-            if result:
-                LinuxEnvironment.create_desktop_file()
+            # result = LinuxEnvironment.check_system_daemon()
+            # if result:
+            #     LinuxEnvironment.create_desktop_file()
 
         elif self.current_platform == 'win32':
             path_config = os.path.join(
@@ -67,23 +67,24 @@ class ConfigManager:
                             ConfigManager.app
                         )
 
-            self.set_config_path(config=path_config)
+            # self.set_config_path(config=path_config)
 
-            run_path = os.path.join(path_config, ConfigManager.runfile)
-
-            WindowsEnvironment.make_file_run(
-                    name_app=ConfigManager.app,
-                    file_runnable_path=run_path
-                )
-
-            WindowsEnvironment.make_shortcut(
-                    script_path=run_path
-                )
+            # run_path = os.path.join(path_config, ConfigManager.runfile)
+            #
+            # WindowsEnvironment.make_file_run(
+            #         name_app=ConfigManager.app,
+            #         file_runnable_path=run_path
+            #     )
+            #
+            # WindowsEnvironment.make_shortcut(
+            #         script_path=run_path
+            #     )
 
         else:
             # Platform Error.
             path_config = None
 
+        self.set_config_path(config=path_config)
 
     def set_config_path(
         self,
@@ -91,14 +92,15 @@ class ConfigManager:
     ) -> None:
         """
         """
-        self.path_config = config
-        self.path_config_file = os.path.join(
-                                    self.path_config,
-                                    ConfigManager.file
-                                )
+        if config is not None:
+            self.path_config = config
+            self.path_config_file = os.path.join(
+                                        self.path_config,
+                                        ConfigManager.file
+                                    )
 
-        if not os.path.exists(self.path_config):
-            os.makedirs(self.path_config)
+            if not os.path.exists(self.path_config):
+                os.makedirs(self.path_config)
 
     def save_config(
         self,

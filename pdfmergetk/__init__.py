@@ -22,3 +22,5 @@ from pdfmergetk.reader import ReaderPDFImage
 from pdfmergetk.models import PDFile
 from pdfmergetk.dataclass import Data
 from pdfmergetk.configmanager import ConfigManager
+
+from pdfmergetk.installer import InstallerPDFMergeTK

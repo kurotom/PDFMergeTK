@@ -30,14 +30,13 @@ You can install this project in several ways.
 $ pip install pdfmergetk
 ```
 
-Running using CLI
+Upon completion of the installation, the following commands will be available:
 
-```bash
-$ mergepdf
-```
-
-* Linux : a `.desktop` file will be created in the location `~/.local/share/applications/`.
-* Windows : a shortcut will be generated on the current user's desktop.
+| Command | Description |
+|-|-|
+| `mergepdf` | start the program. |
+| `mergepdfreset` | in case of an error when trying to open the program, restarts the program's multiple run mechanism (opening the program more than once). |
+| `pdfmergetklinks` | creates shortcuts for the program, on desktop on Windows and in `~/.local/share/applications/` on Linux. With the name `PDFMergeTK`.|
 
 
 ## From Github, clone project

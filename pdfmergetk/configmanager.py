@@ -219,12 +219,25 @@ Categories=Utility;
         if not os.path.exists(path_):
             with open(path_, 'w') as file:
                 file.writelines(file_desktop)
+        LinuxEnvironment.update_desktop_file()
 
     def get_desktop_path() -> str:
         """
         """
         result = subprocess.check_output(['xdg-user-dir', 'DESKTOP'])
         return result.strip()
+
+    def update_desktop_file() -> None:
+        """
+        """
+        process = subprocess.run(args=[
+                                    'update-desktop-database',
+                                    LinuxEnvironment.path_desktop_file
+                                ],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.STDOUT
+                            )
+        process.returncode
 
 
 class MacEnvironment:

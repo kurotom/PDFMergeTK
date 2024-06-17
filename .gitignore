@@ -1,7 +1,7 @@
 __pycache__
 */__pycache__
 notas_dev.md
-src/ignored_files
+*/ignored_files
 dist/
 build/
 *.spec

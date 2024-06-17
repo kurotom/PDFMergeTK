@@ -26,7 +26,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build executable
-        run: pyinstaller --onefile --windowed src/__main__.py --name PDFMergeTK
+        run: pyinstaller --onefile --windowed pdfmergetk/__main__.py --name PDFMergeTK
 
       # - name: Changes Checksum Binary File
       #   shell: bash
@@ -100,9 +100,9 @@ jobs:
           git pull origin main
 
           # Adds link
-          echo "\n" >> README.md
+          echo "" >> README.md
           echo -e "* [Download latest PDFMergeTK - Linux](${RELEASE_URL})\n" >> README.md
-          echo -e "  SHA256: ${HASH}" >> README.md
+          echo -e "  SHA256: ${HASH}\n" >> README.md
           echo -e "  [Virustotal.com scan latest version]($FIRST_LINK)\n\n" >> README.md
 
           # Push and commit changes README.md
@@ -127,10 +127,11 @@ jobs:
         with:
           python-version: '3.11.9'
 
-      - name: Install Windows SDK and osslsigncode
-        run: |
-          choco install osslsigncode
-          choco install windows-sdk-10.0
+      # # Packages to Sign EXE
+      # - name: Install Windows SDK and osslsigncode
+      #   run: |
+      #     choco install osslsigncode
+      #     choco install windows-sdk-10.0
 
       - name: Install dependencies
         run: |
@@ -139,7 +140,7 @@ jobs:
           pip install pyinstaller
 
       - name: Build executable
-        run: pyinstaller --onefile --windowed src/__main__.py --name PDFMergeTK.exe
+        run: pyinstaller --onefile --windowed pdfmergetk/__main__.py --name PDFMergeTK.exe
 
       - name: Changes Checksum EXE
         shell: bash
@@ -149,6 +150,7 @@ jobs:
           rm -rvf ./dist/PDFMergeTK.exe
           mv -v ./dist/PDFMergeTK_new_checksum.exe ./dist/PDFMergeTK.exe
 
+      # # Workflow to sign EXE
       # - name: Decode certificate
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -231,7 +233,7 @@ jobs:
 
           # Adds link download
           echo -e "* [Download latest PDFMergeTK - Windows](${RELEASE_URL})\n" >> README.md
-          echo -e "  SHA256: ${HASH}" >> README.md
+          echo -e "  SHA256: ${HASH}\n" >> README.md
           echo -e "  [Virustotal.com scan latest version]($FIRST_LINK)\n\n" >> README.md
 
           # push and commit changes README.md

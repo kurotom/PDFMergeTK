@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pdfmergetk"
-version = "0.1.0"
+version = "0.1.1"
 description = "GUI application to easily merge PDF files with the power of Python."
 authors = ["kurotom <55354389+kurotom@users.noreply.github.com>"]
 license = "GPL-3.0-or-later"

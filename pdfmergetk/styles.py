@@ -29,6 +29,7 @@ class AppStyles:
         self.entrys()
         self.labels()
         self.entrys()
+        self.buttons()
 
     def frame(self) -> None:
         """
@@ -46,7 +47,7 @@ class AppStyles:
         self.__style.configure(
                 'ButtonController.TButton',
                 font=(AppStyles.default_font, AppStyles.default_size + 5),
-                anchor=tk.CENTER,
+                anchor="center",
                 justify='center',
                 background=AppStyles.color_background
             )
@@ -54,14 +55,14 @@ class AppStyles:
         self.__style.configure(
                 'Button.TButton',
                 font=(AppStyles.default_font, AppStyles.default_size),
-                anchor=tk.CENTER,
+                background=AppStyles.color_background,
                 justify='center',
-                background=AppStyles.color_background
+                anchor="center",
             )
         self.__style.configure(
             'ButtonJoinMerge.TButton',
             font=(AppStyles.default_font, AppStyles.default_size + 1, 'bold'),
-            anchor=tk.CENTER,
+            anchor="center",
             justify='center',
             background=AppStyles.color_background
         )
@@ -80,7 +81,7 @@ class AppStyles:
         self.__style.configure(
                 'LabelListbox.TLabel',
                 font=(AppStyles.default_font, AppStyles.default_size, 'bold'),
-                anchor=tk.CENTER,
+                anchor="center",
                 justify='center',
                 background=AppStyles.color_background
             )

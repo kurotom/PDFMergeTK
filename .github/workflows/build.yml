@@ -48,8 +48,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.1.1-linux
-          release_name: PDFMergeTK Linux Release v0.1.1-linux
+          tag_name: v0.1.2-linux
+          release_name: PDFMergeTK Linux Release v0.1.2-linux
           draft: false
           prerelease: false
 
@@ -92,7 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.1-linux/PDFMergeTK"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.2-linux/PDFMergeTK"
           HASH=$(cat hash.txt | awk '{print $1}')
           FIRST_LINK=$(cat link_vtt.txt | head -1)
 
@@ -111,7 +111,7 @@ jobs:
 
           # Add and Commit
           git add README.md
-          git commit -m "Update README with artifact link - Linux v0.1.1"
+          git commit -m "Update README with artifact link - Linux v0.1.2"
           git push origin main --force
 
   build-windows:
@@ -183,8 +183,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.1.1-windows
-          release_name: PDFMergeTK Windows Release v0.1.1-windows
+          tag_name: v0.1.2-windows
+          release_name: PDFMergeTK Windows Release v0.1.2-windows
           draft: false
           prerelease: false
 
@@ -224,7 +224,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.1-windows/PDFMergeTK.exe"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.2-windows/PDFMergeTK.exe"
           HASH=$(cat hash.txt | awk '{print $1}')
           FIRST_LINK=$(cat link_vtt.txt | head -1)
 
@@ -242,5 +242,5 @@ jobs:
 
           # Add and Commits
           git add README.md
-          git commit -m "Update README with artifact link - Windows v0.1.1"
+          git commit -m "Update README with artifact link - Windows v0.1.2"
           git push origin main --force

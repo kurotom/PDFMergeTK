@@ -44,6 +44,8 @@ from pdfmergetk.models import PDFile
 from pdfmergetk.dataclass import Data
 from pdfmergetk.configmanager import ConfigManager
 
+from pdfmergetk.pathclass import PathClass
+
 
 from typing import Union, Tuple
 
@@ -520,13 +522,12 @@ class MainGUI:
                                 self.frameUserControl,
                                 text=LanguagesClass.language['open'],
                                 command=self.select_pdf_widget,
-                                style='Button.TButton'
+                                style='Button.TButton',
                             )
-
         self.open_files.place(
                 x=75,
                 y=0,
-                height=30,
+                height=40,
                 width=120
             )
 
@@ -599,8 +600,8 @@ class MainGUI:
                                     )
                 convert_button.place(
                             x=75,
-                            y=460,
-                            height=30,
+                            y=457,
+                            height=40,
                             width=120
                         )
 
@@ -639,13 +640,13 @@ class MainGUI:
                     x=0,
                     y=425,
                     height=30,
-                    width=70
+                    width=65
                 )
             self.filename_entry.place(
-                    x=80,
+                    x=65,
                     y=425,
                     height=30,
-                    width=self.__width_frame_usercontrol - (105)
+                    width=self.__width_frame_usercontrol - (99)
                 )
 
             ElementsTK.items.append({'name': self.filename_label})
@@ -865,7 +866,8 @@ class UserListBox(MainGUI):
         self.label_listbox = ttk.Label(
                                 self.frame,
                                 text=LanguagesClass.language['list'],
-                                style='LabelListbox.TLabel'
+                                style='LabelListbox.TLabel',
+                                anchor="center"
                             )
 
         self.choices = tk.StringVar()
@@ -894,32 +896,54 @@ class UserListBox(MainGUI):
                 yscrollcommand=self.verticalScroll.set
             )
 
+# icons up, down and trash
+        iconUP = tk.PhotoImage(
+                        file=PathClass.join(*"pdfmergetk/icons/up.png".split("/"))
+                    )
+        iconUP = iconUP.subsample(3)
+
+        iconDOWN = tk.PhotoImage(
+                        file=PathClass.join(*"pdfmergetk/icons/down.png".split("/"))
+                    )
+        iconDOWN = iconDOWN.subsample(3)
+
+        iconTRASH = tk.PhotoImage(
+                        file=PathClass.join(*"pdfmergetk/icons/trash.png".split("/"))
+                    )
+        iconTRASH = iconTRASH.subsample(3)
+
 #
+# Button up list pdf
         self.up_button = ttk.Button(
                     self.frame,
-                    text=u'\u21E7',
+                    image=iconUP,
                     command=self.up_file_list,
                     style='ButtonController.TButton'
                 )
+        self.up_button.image = iconUP
+# Button down list pdf
         self.down_button = ttk.Button(
                     self.frame,
-                    text=u'\u21E9',
+                    image=iconDOWN,
                     command=self.down_file_list,
                     style='ButtonController.TButton'
                 )
+        self.down_button.image = iconDOWN
+# Button delete list pdf
         self.delete_button = ttk.Button(
                     self.frame,
-                    text=u'\U0001F5D1',
+                    image=iconTRASH,
                     command=self.delete_pdf_item,
                     style='ButtonController.TButton'
                 )
+        self.delete_button.image = iconTRASH
+
 
 # ListBox Place
         self.label_listbox.place(
                 x=75,
                 y=40,
                 height=30,
-                # width=self.width - (30)
                 width=120
             )
         self.listbox_files.place(
@@ -1137,6 +1161,15 @@ class DisplayCanvas(MainGUI):
         """
         if self.is_show_buttons is False:
 
+            iconNEXT = tk.PhotoImage(
+                            file=PathClass.join(*"pdfmergetk/icons/right.png".split("/"))
+                        )
+            iconNEXT = iconNEXT.subsample(3)
+            iconPREV = tk.PhotoImage(
+                            file=PathClass.join(*"pdfmergetk/icons/left.png".split("/"))
+                        )
+            iconPREV = iconPREV.subsample(3)
+
             self.is_show_buttons = True
 
             self.frame_buttons = ttk.Frame(
@@ -1144,31 +1177,30 @@ class DisplayCanvas(MainGUI):
                                         style='FrameStyle.TFrame'
                                     )
 
+            # prev button pdf viewer
             self.button_prev = ttk.Button(
                                         self.frame_buttons,
-                                        text=u'\u21E6',
+                                        image=iconPREV,
                                         command=self.prev_page,
                                         style='ButtonController.TButton'
                                     )
+            self.button_prev.image = iconPREV
 
             self.label_current_page = ttk.Label(
                                                 self.frame_buttons,
                                                 text="",
-                                                style='LabelIndexPage.TLabel'
+                                                style='LabelIndexPage.TLabel',
+                                                anchor="center"
                                             )
 
+            # next button pdf viewer
             self.button_next = ttk.Button(
                                         self.frame_buttons,
-                                        text=u'\u21E8',
+                                        image=iconNEXT,
                                         command=self.next_page,
                                         style='ButtonController.TButton'
                                     )
-
-            self.button_delete = ttk.Button(
-                                        self.frame_buttons,
-                                        text=u'\U0001F5D1',
-                                        command=None
-                                    )
+            self.button_next.image = iconNEXT
 
             middle_frame = (self.width_canvas / 2)
 
@@ -1178,26 +1210,22 @@ class DisplayCanvas(MainGUI):
                                     relwidth=1,
                                     height=40
                                 )
-
             self.button_prev.place(
                                 x=(middle_frame - (55 + (50 / 2))),
                                 y=0,
                                 width=55,
-                                # height=30
                                 height=35
                             )
             self.label_current_page.place(
                                         x=middle_frame - (50 / 2),
                                         y=0,
                                         width=50,
-                                        # height=30
                                         height=35
                                     )
             self.button_next.place(
                                 x=(middle_frame + 25),
                                 y=0,
                                 width=55,
-                                # height=30
                                 height=35
                             )
 

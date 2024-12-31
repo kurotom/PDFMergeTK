@@ -18,7 +18,7 @@ class ReaderPDFImage:
 
     def read_pdf(
         filename: str = None
-    ) -> fitz.fitz.Document:
+    ) -> fitz.Document:
         """
         Reads data of PDF file or create a new PDF file.
         """

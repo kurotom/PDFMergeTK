@@ -16,8 +16,8 @@ class PDFile:
     def __init__(
         self,
         name: str,
-        data: fitz.fitz.Document,
-        images: List[fitz.fitz.Pixmap]
+        data: fitz.Document,
+        images: List[fitz.Pixmap]
     ) -> None:
         """
         Constructor

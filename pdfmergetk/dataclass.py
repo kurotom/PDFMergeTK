@@ -8,7 +8,11 @@ import fitz
 
 from pdfmergetk.models import PDFile
 
-from typing import Union, List
+from typing import Union, List, TypeVar
+
+
+PDFile_objs = TypeVar("PDFile_objs")
+
 
 
 class Data:
@@ -16,16 +20,11 @@ class Data:
     Responsible for the behavior of PDFile objects, page images, and all
     necessary application data.
     """
-    # total_pages
-    total_pages = 0
-    # [ names_pdf ]
-    names = []
-    # [ PDFile_objs ]
-    selected = []
-    # [ fitz.fitz.Pixmap ]
-    imagesTK = []
-    # [ str ]
-    images_loaded = []
+    total_pages: int = 0
+    names: List[str] = []
+    selected: List[PDFile_objs] = []
+    imagesTK: List[fitz.Pixmap] = []
+    images_loaded: List[str] = []
 
     def set_names(
         pdf_names: str
@@ -54,7 +53,7 @@ class Data:
             Data.set_names(pdf_names=pdfileObj.name)
 
     def add_image(
-        image: fitz.fitz.Pixmap
+        image: fitz.Pixmap
     ) -> None:
         """
         Adds image of PDF page.
@@ -176,7 +175,7 @@ class Data:
                 Data.imagesTK += item.images
                 # print(len(Data.imagesTK), len(item.images))
 
-    def get_images() -> List[fitz.fitz.Pixmap]:
+    def get_images() -> List[fitz.Pixmap]:
         """
         Returns all images of PDFile.
         """

@@ -56,17 +56,11 @@ $ python src
 # Download executable for Linux or Windows
 
 
-* [Download latest PDFMergeTK - Linux](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.1-linux/PDFMergeTK)
 
-  SHA256: 5316655626c9c9c3ce873e0b63fe2729d456881d948955f635f54209f8ed1eef
+* [Download latest PDFMergeTK - Linux](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.4-linux/PDFMergeTK)
 
-  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/5316655626c9c9c3ce873e0b63fe2729d456881d948955f635f54209f8ed1eef/detection)
+  SHA256: e00f56a18ac26890ce1c17016c10a3c29791a159fb56523e9d0c78cf5f31e226
 
-
-* [Download latest PDFMergeTK - Windows](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.1-windows/PDFMergeTK.exe)
-
-  SHA256: d011f64d281a3c3a4f0bb0fb0d7ca90beb2bf6930578c14f0b929019cbbb2a79
-
-  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/d011f64d281a3c3a4f0bb0fb0d7ca90beb2bf6930578c14f0b929019cbbb2a79/detection)
+  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/e00f56a18ac26890ce1c17016c10a3c29791a159fb56523e9d0c78cf5f31e226/detection)
 
 

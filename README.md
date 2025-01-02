@@ -64,3 +64,10 @@ $ python src
   [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/e00f56a18ac26890ce1c17016c10a3c29791a159fb56523e9d0c78cf5f31e226/detection)
 
 
+* [Download latest PDFMergeTK - Windows](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.4-windows/PDFMergeTK.exe)
+
+  SHA256: 6e6065c6f6c50737bc44c1fea7c2d01261d9843b1a117f273974047a2dbcb5c0
+
+  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/6e6065c6f6c50737bc44c1fea7c2d01261d9843b1a117f273974047a2dbcb5c0/detection)
+
+

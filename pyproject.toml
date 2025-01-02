@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pdfmergetk"
-version = "0.1.3"
+version = "0.1.4"
 description = "GUI application to easily merge PDF files with the power of Python."
 authors = ["kurotom <55354389+kurotom@users.noreply.github.com>"]
 license = "GPL-3.0-or-later"
@@ -18,6 +18,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
+platformdirs = "*"
 python = "^3.8"
 Pillow = "<=11"
 pymupdf = "^1.21.1"

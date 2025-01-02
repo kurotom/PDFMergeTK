@@ -22,7 +22,6 @@ from tkinter import filedialog
 
 from tkinter import messagebox
 
-import os
 import subprocess
 
 from threading import Thread, Event
@@ -45,6 +44,9 @@ from pdfmergetk.dataclass import Data
 from pdfmergetk.configmanager import ConfigManager
 
 from pdfmergetk.pathclass import PathClass
+
+
+from pdfmergetk import iconspath
 
 
 from typing import Union, Tuple
@@ -558,7 +560,7 @@ class MainGUI:
 
                 for item in filesPDF:
                     # print(item)
-                    name_pdf = os.path.basename(item.name)
+                    name_pdf = PathClass.basename(item.name)
                     pdfile = PDFile(
                                 name=name_pdf,
                                 data=ReaderPDFImage.read_pdf(item.name),
@@ -661,11 +663,12 @@ class MainGUI:
             filename_output = self.output_filename_pdf_entry.get()
             filename_output = filename_output.replace('.pdf', '')
             filename_output = '%s.pdf' % (filename_output)
-            file_save_path = '%s%s%s' % (
-                                os.path.expanduser('~'),
-                                os.path.sep,
-                                filename_output
-                            )
+            file_save_path = PathClass.join(
+                # PathClass.expanduser('~'),
+                PathClass.get_desktop(),
+                PathClass.separator,
+                filename_output
+            )
 
             sorted_files_pdf = self.userlistbox.get_listbox()
 
@@ -694,13 +697,13 @@ class MainGUI:
         """
         Displays the directory where the PDF file is written.
         """
-        file_path = os.path.dirname(file_path)
+        file_path = PathClass.dirname(file_path)
         if self.configmanager.current_platform == 'linux':
             subprocess.run(['xdg-open', file_path])
         elif self.configmanager.current_platform == 'darwin':
             subprocess.run(['open', file_path])
         elif self.configmanager.current_platform == 'win32':
-            os.startfile(file_path)
+            PathClass.openfile(file_path)
         else:
             # Platform Error.
             pass
@@ -897,19 +900,13 @@ class UserListBox(MainGUI):
             )
 
 # icons up, down and trash
-        iconUP = tk.PhotoImage(
-                        file=PathClass.join(*"pdfmergetk/icons/up.png".split("/"))
-                    )
+        iconUP = tk.PhotoImage(file=iconspath.iconUP)
         iconUP = iconUP.subsample(3)
 
-        iconDOWN = tk.PhotoImage(
-                        file=PathClass.join(*"pdfmergetk/icons/down.png".split("/"))
-                    )
+        iconDOWN = tk.PhotoImage(file=iconspath.iconDOWN)
         iconDOWN = iconDOWN.subsample(3)
 
-        iconTRASH = tk.PhotoImage(
-                        file=PathClass.join(*"pdfmergetk/icons/trash.png".split("/"))
-                    )
+        iconTRASH = tk.PhotoImage(file=iconspath.iconTRASH)
         iconTRASH = iconTRASH.subsample(3)
 
 #
@@ -1161,13 +1158,9 @@ class DisplayCanvas(MainGUI):
         """
         if self.is_show_buttons is False:
 
-            iconNEXT = tk.PhotoImage(
-                            file=PathClass.join(*"pdfmergetk/icons/right.png".split("/"))
-                        )
+            iconNEXT = tk.PhotoImage(file=iconspath.iconNEXT)
             iconNEXT = iconNEXT.subsample(3)
-            iconPREV = tk.PhotoImage(
-                            file=PathClass.join(*"pdfmergetk/icons/left.png".split("/"))
-                        )
+            iconPREV = tk.PhotoImage(file=iconspath.iconPREV)
             iconPREV = iconPREV.subsample(3)
 
             self.is_show_buttons = True
@@ -1335,7 +1328,7 @@ class AvoidOpeningThemMultipleTimes:
     """
     is_open = False
 
-    path_indicator = os.path.join(
+    path_indicator = PathClass.join(
                         tempfile.gettempdir(),
                         'PDFMergeTK.txt'
                     )
@@ -1344,7 +1337,7 @@ class AvoidOpeningThemMultipleTimes:
         """
         Checks if file exists.
         """
-        return os.path.exists(AvoidOpeningThemMultipleTimes.path_indicator)
+        return PathClass.exists(AvoidOpeningThemMultipleTimes.path_indicator)
 
     def write() -> None:
         """
@@ -1357,7 +1350,7 @@ class AvoidOpeningThemMultipleTimes:
         """
         Deletes file.
         """
-        os.remove(AvoidOpeningThemMultipleTimes.path_indicator)
+        PathClass.delete_file(AvoidOpeningThemMultipleTimes.path_indicator)
 
 
 class WarningOpenedApp:

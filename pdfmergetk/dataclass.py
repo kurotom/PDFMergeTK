@@ -8,6 +8,8 @@ import fitz
 
 from pdfmergetk.models import PDFile
 
+from pdfmergetk.pathclass import PathClass
+
 from typing import Union, List, TypeVar
 
 
@@ -66,7 +68,7 @@ class Data:
         """
         Adds the PDFile object name to a list to avoid duplicate images.
         """
-        Data.images_loaded.append(os.path.basename(pdfileObj.name))
+        Data.images_loaded.append(PathClass.basename(pdfileObj.name))
 
     def delete(
         pdf_name: str
@@ -111,7 +113,7 @@ class Data:
         """
         idx = -1
         for i in range(len(Data.selected)):
-            if pdf_name == os.path.basename(Data.selected[i].name):
+            if pdf_name == PathClass.basename(Data.selected[i].name):
                 idx = i
         return idx
 
@@ -154,7 +156,7 @@ class Data:
         Data.selected = new_order
 
         Data.names.clear()
-        Data.names = [os.path.basename(i.name) for i in Data.selected]
+        Data.names = [PathClass.basename(i.name) for i in Data.selected]
 
         Data.imagesTK = []
         Data.images_loaded = []
@@ -167,7 +169,7 @@ class Data:
         # print([i.name for i in Data.selected])
         # Data.imagesTK.clear()
         for item in Data.selected:
-            current_name_pdf = os.path.basename(item.name)
+            current_name_pdf = PathClass.basename(item.name)
             if current_name_pdf not in Data.images_loaded:
                 # print('Data collect_images ', item, current_name_pdf)
                 Data.images_loaded.append(current_name_pdf)

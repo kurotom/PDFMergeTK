@@ -4,11 +4,33 @@
 
 import os
 import shutil
+import platformdirs
 
 from typing import Tuple
 
 
 class PathClass:
+
+    __sep = os.path.sep
+
+    @classmethod
+    @property
+    def separator(cls) -> str:
+        """
+        """
+        return cls.__sep
+
+    def get_desktop() -> str:
+        """
+        """
+        return platformdirs.user_desktop_dir()
+
+    def openfile(
+        path: str
+    ) -> None:
+        """
+        """
+        os.startfile(path)
 
     def absolute_path(
         path: str
@@ -17,7 +39,14 @@ class PathClass:
         """
         return os.path.abspath(path=path)
 
-    def delete(
+    def delete_file(
+        path: str
+    ) -> bool:
+        """
+        """
+        return os.remove(path)
+
+    def delete_directory(
         path: str
     ) -> bool:
         """

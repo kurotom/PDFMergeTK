@@ -2,14 +2,14 @@
 """
 """
 
-import os
-
 from pdfmergetk.configmanager import (
     ConfigManager,
     WindowsEnvironment,
     LinuxEnvironment,
     MacEnvironment
 )
+
+from pdfmergetk.pathclass import PathClass
 
 
 class InstallerPDFMergeTK:
@@ -31,7 +31,7 @@ class InstallerPDFMergeTK:
                 LinuxEnvironment.create_desktop_file()
 
         elif config.current_platform == 'win32':
-            run_path = os.path.join(config.path_config, ConfigManager.runfile)
+            run_path = PathClass.join(config.path_config, ConfigManager.runfile)
             WindowsEnvironment.make_file_run(
                         name_app=ConfigManager.app,
                         file_runnable_path=run_path

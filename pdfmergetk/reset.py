@@ -2,7 +2,7 @@
 """
 """
 
-from src import AvoidOpeningThemMultipleTimes
+from pdfmergetk import AvoidOpeningThemMultipleTimes
 
 
 def main():

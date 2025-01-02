@@ -9,6 +9,8 @@ import subprocess
 
 import json
 
+from pdfmergetk.pathclass import PathClass
+
 from typing import Union
 
 
@@ -37,8 +39,8 @@ class ConfigManager:
         self.current_platform = sys.platform.lower()
 
         if self.current_platform == 'darwin':
-            path_config = os.path.join(
-                            os.path.expanduser('~'),
+            path_config = PathClass.join(
+                            PathClass.expanduser('~'),
                             "Library",
                             "Application Support",
                             ConfigManager.app
@@ -49,8 +51,8 @@ class ConfigManager:
             # `mergepdf` or run script python.
 
         elif self.current_platform == 'linux':
-            path_config = os.path.join(
-                            os.path.expanduser('~'),
+            path_config = PathClass.join(
+                            PathClass.expanduser('~'),
                             ".config",
                             ConfigManager.app
                         )
@@ -62,14 +64,14 @@ class ConfigManager:
             #     LinuxEnvironment.create_desktop_file()
 
         elif self.current_platform == 'win32':
-            path_config = os.path.join(
+            path_config = PathClass.join(
                             os.getenv('LOCALAPPDATA'),
                             ConfigManager.app
                         )
 
             # self.set_config_path(config=path_config)
 
-            # run_path = os.path.join(path_config, ConfigManager.runfile)
+            # run_path = PathClass.join(path_config, ConfigManager.runfile)
             #
             # WindowsEnvironment.make_file_run(
             #         name_app=ConfigManager.app,
@@ -94,13 +96,13 @@ class ConfigManager:
         """
         if config is not None:
             self.path_config = config
-            self.path_config_file = os.path.join(
+            self.path_config_file = PathClass.join(
                                         self.path_config,
                                         ConfigManager.file
                                     )
 
-            if not os.path.exists(self.path_config):
-                os.makedirs(self.path_config)
+            if not PathClass.exists(self.path_config):
+                PathClass.makedirs(self.path_config)
 
     def save_config(
         self,
@@ -135,8 +137,8 @@ class ConfigManager:
 class WindowsEnvironment:
     """
     """
-    pythonw_base_dir = os.path.dirname(sys.executable)
-    pythonw_path_exec = os.path.join(
+    pythonw_base_dir = PathClass.dirname(sys.executable)
+    pythonw_path_exec = PathClass.join(
                             pythonw_base_dir,
                             'pythonw.exe'
                         )
@@ -152,7 +154,7 @@ import %s
 if __name__ == '__main__':\n
     %s.gui.main()
         """ % (name_app, name_app)
-        if not os.path.exists(file_runnable_path):
+        if not PathClass.exists(file_runnable_path):
             with open(file_runnable_path, 'w') as fl:
                 fl.writelines(string)
 
@@ -163,7 +165,7 @@ if __name__ == '__main__':\n
         """
         from win32com.client import Dispatch
 
-        link_path = os.path.join(
+        link_path = PathClass.join(
                             WindowsEnvironment.get_desktop_path(),
                             'PDFMergeTK.lnk'
                         )
@@ -187,8 +189,8 @@ class LinuxEnvironment:
     """
     """
     command = 'ps -p 1 -o comm='
-    path_desktop_file = os.path.join(
-                            os.path.expanduser('~'),
+    path_desktop_file = PathClass.join(
+                            PathClass.expanduser('~'),
                             ".local/share/applications/"
                         )
 
@@ -215,8 +217,8 @@ Type=Application
 Categories=Utility;
         """
         name_file = 'PDFMergeTK.desktop'
-        path_ = os.path.join(LinuxEnvironment.path_desktop_file, name_file)
-        if not os.path.exists(path_):
+        path_ = PathClass.join(LinuxEnvironment.path_desktop_file, name_file)
+        if not PathClass.exists(path_):
             with open(path_, 'w') as file:
                 file.writelines(file_desktop)
         LinuxEnvironment.update_desktop_file()

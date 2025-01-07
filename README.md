@@ -1,36 +1,29 @@
 # PDFMergeTK
 
-GUI application that allows you to merge PDF files quickly, easily, intuitively and with respect for privacy.
+GUI application that allows you to merge PDF files quickly, easily, intuitively and with respect for privacy. Designed to run on Windows and Linux.
 
 ---
 
-[![Build Executables](https://github.com/kurotom/PDFMergeTK/actions/workflows/build.yml/badge.svg)](https://github.com/kurotom/PDFMergeTK/actions/workflows/build.yml)
+[![Actions PDFMergeTK](https://github.com/kurotom/PDFMergeTK/actions/workflows/build.yml/badge.svg)](https://github.com/kurotom/PDFMergeTK/actions/workflows/build.yml)
 
 ---
 
 > [!IMPORTANT]
-> * **Windows** : The executable EXE is generated using [`pyinstaller`](https://pyinstaller.org/en/stable/), it is possible that when downloading and/or running this executable, the antivirus you are using detects it as a virus, but it is because it is a **false positive**, [review `pyinstaller` developer notes](https://github.com/pyinstaller/pyinstaller/blob/develop/.github/ISSUE_TEMPLATE/antivirus.md). If you have any problems running this program, it should be added to the <u>*antivirus exception list*</u> and it would be helpful to this project if you **report it as false positive** to the antivirus company you use.
-> * **Linux** : did not file any reports on virustotal.com.
 > * If you have any problems create an issue in the [`Github Issue` section of the project](https://github.com/kurotom/PDFMergeTK/issues)
 >
 
-> [!NOTE]
-> As a *sign of transparency*, you can review the code, view the analysis results at *virustotal.com* and compare the SHA256 hash of the generated executable, available in the download section.
->
+---
 
 
 # Install
 
-You can install this project in several ways.
-
-
-## From Pypi, install package
 
 ```bash
 $ pip install pdfmergetk
 ```
 
-Upon completion of the installation, the following commands will be available:
+
+# Commands
 
 | Command | Description |
 |-|-|
@@ -50,23 +43,5 @@ $ poetry shell
 
 $ poetry install
 
-$ python src
+$ python pdfmergetk
 ```
-
-# Download executable for Linux or Windows
-
-
-* [Download latest PDFMergeTK - Linux](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.1-linux/PDFMergeTK)
-
-  SHA256: 5316655626c9c9c3ce873e0b63fe2729d456881d948955f635f54209f8ed1eef
-
-  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/5316655626c9c9c3ce873e0b63fe2729d456881d948955f635f54209f8ed1eef/detection)
-
-
-* [Download latest PDFMergeTK - Windows](https://github.com/kurotom/PDFMergeTK/releases/download/v0.1.1-windows/PDFMergeTK.exe)
-
-  SHA256: d011f64d281a3c3a4f0bb0fb0d7ca90beb2bf6930578c14f0b929019cbbb2a79
-
-  [Virustotal.com scan latest version](https://www.virustotal.com/gui/file/d011f64d281a3c3a4f0bb0fb0d7ca90beb2bf6930578c14f0b929019cbbb2a79/detection)
-
-

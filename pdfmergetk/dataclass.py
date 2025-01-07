@@ -3,7 +3,6 @@
 Data : manages all PDF data (PDFiles instances) of application.
 """
 
-import os
 import fitz
 
 from pdfmergetk.models import PDFile

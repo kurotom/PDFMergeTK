@@ -1,4 +1,4 @@
-name: Build Executables
+name: Actions PDFMergeTK
 
 on:
   push:
@@ -17,230 +17,23 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.9'
+          python-version: '3.12.8'
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel pefile requests
+          python -m pip install --upgrade pip
+          pip install poetry
           pip install -r requirements.txt
-          pip install pyinstaller
 
-      - name: Build executable
-        run: pyinstaller --onefile --windowed pdfmergetk/__main__.py --name PDFMergeTK
-
-      # - name: Changes Checksum Binary File
-      #   shell: bash
-      #   run: |
-      #     # Pyhon Change Checksum Binary File
-      #     python utils/change_checksum.py ./dist/PDFMergeTK
-      #     rm -rvf ./dist/PDFMergeTK
-      #     mv -v ./dist/PDFMergeTK_new_checksum ./dist/PDFMergeTK
-
-      - name: Upload executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-executable
-          path: ./dist/PDFMergeTK
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Poetry To PyPi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v0.1.4-linux
-          release_name: PDFMergeTK Linux Release v0.1.4-linux
-          draft: false
-          prerelease: false
+          TO_PYPI: ${{ secrets.TO_PYPI }}
+        run:
+          poetry config pypi-token.pypi $TO_PYPI
 
-      - name: Upload binary to GitHub Release
-        uses: actions/upload-release-asset@v1
+      - name: Build and Publish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/PDFMergeTK
-          asset_name: PDFMergeTK
-          asset_content_type: application/octet-stream
-
-      - name: Generate Hash bin PDFMergeTK
-        shell: bash
-        id: generate_hash
+          TO_PYPI: ${{ secrets.TO_PYPI }}
         run: |
-          sha256sum ./dist/PDFMergeTK > hash.txt
-          cat hash.txt
-
-      - name: Scans by Virustotal
-        shell: bash
-        env:
-          API_KEY: ${{ secrets.API_KEY_VT_ }}
-        run: |
-            API_KEY_=$(echo ${{ secrets.API_KEY_VT_ }} | base64 -d)
-            python utils/to_virustotal.py dist/PDFMergeTK $API_KEY_
-
-      - name: Fetch all branches
-        run: git fetch --all
-
-      - name: Checkout main branch
-        run: git checkout main
-
-      - name: Delete olders releases and hash SHA256
-        run: sed -z s'/\* \[Download latest PDFMergeTK - Linux\].*//g' README.md -i README.md
-
-      - name: Upload README.md
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.4-linux/PDFMergeTK"
-          HASH=$(cat hash.txt | awk '{print $1}')
-          FIRST_LINK=$(cat link_vtt.txt | head -1)
-
-          # Pull changes
-          git pull origin main
-
-          # Adds link
-          echo "" >> README.md
-          echo -e "* [Download latest PDFMergeTK - Linux](${RELEASE_URL})\n" >> README.md
-          echo -e "  SHA256: ${HASH}\n" >> README.md
-          echo -e "  [Virustotal.com scan latest version]($FIRST_LINK)\n\n" >> README.md
-
-          # Push and commit changes README.md
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Add and Commit
-          git add README.md
-          git commit -m "Update README with artifact link - Linux v0.1.4"
-          git push origin main --force
-
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11.9'
-
-      # # Packages to Sign EXE
-      # - name: Install Windows SDK and osslsigncode
-      #   run: |
-      #     choco install osslsigncode
-      #     choco install windows-sdk-10.0
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel pefile requests
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      - name: Build executable
-        run: pyinstaller --onefile --windowed pdfmergetk/__main__.py --name PDFMergeTK.exe
-
-      - name: Changes Checksum EXE
-        shell: bash
-        run: |
-          # Pyhon Change Checksum EXE
-          python utils/change_checksum.py ./dist/PDFMergeTK.exe
-          rm -rvf ./dist/PDFMergeTK.exe
-          mv -v ./dist/PDFMergeTK_new_checksum.exe ./dist/PDFMergeTK.exe
-
-      # # Workflow to sign EXE
-      # - name: Decode certificate
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
-      #   shell: bash
-      #   run: echo ${{ secrets.CERTIFICATE_BASE64 }} | base64 -d > cert.pfx
-      #
-      # - name: Sign EXE file
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
-      #   shell: bash
-      #   run: |
-      #     echo "###   START SIGN EXE   ###"
-      #     osslsigncode sign -pkcs12 cert.pfx -pass "$CERT_PASSWORD" -n "PDFMergeTK.exe" -i "https://github.com/kurotom/PDFMergeTK" -t http://timestamp.digicert.com -in ./dist/PDFMergeTK.exe -out ./dist/PDFMergeTK_signed_executable.exe
-      #     echo "###   END SIGN EXE   ###"
-      #
-      #     # Rename EXE file
-      #     mv -v ./dist/PDFMergeTK_signed_executable.exe ./dist/PDFMergeTK.exe
-
-      - name: Upload executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-executable
-          path: ./dist/PDFMergeTK.exe
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v0.1.4-windows
-          release_name: PDFMergeTK Windows Release v0.1.4-windows
-          draft: false
-          prerelease: false
-
-      - name: Upload binary to GitHub Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/PDFMergeTK.exe
-          asset_name: PDFMergeTK.exe
-          asset_content_type: application/octet-stream
-
-      - name: Generate Hash bin PDFMergeTK
-        shell: bash
-        id: generate_hash
-        run: |
-          sha256sum ./dist/PDFMergeTK.exe > hash.txt
-          cat hash.txt
-
-      - name: Scans by Virustotal
-        shell: bash
-        env:
-          API_KEY: ${{ secrets.API_KEY_VT_ }}
-        run: |
-            API_KEY_=$(echo ${{ secrets.API_KEY_VT_ }} | base64 -d)
-            python utils/to_virustotal.py dist/PDFMergeTK.exe $API_KEY_
-
-      - name: Fetch all branches
-        run: git fetch --all
-
-      - name: Checkout main branch
-        run: git checkout main
-
-      - name: Upload README.md
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/v0.1.4-windows/PDFMergeTK.exe"
-          HASH=$(cat hash.txt | awk '{print $1}')
-          FIRST_LINK=$(cat link_vtt.txt | head -1)
-
-          # Pull changes of repository
-          git pull origin main
-
-          # Adds link download
-          echo -e "* [Download latest PDFMergeTK - Windows](${RELEASE_URL})\n" >> README.md
-          echo -e "  SHA256: ${HASH}\n" >> README.md
-          echo -e "  [Virustotal.com scan latest version]($FIRST_LINK)\n\n" >> README.md
-
-          # push and commit changes README.md
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Add and Commits
-          git add README.md
-          git commit -m "Update README with artifact link - Windows v0.1.4"
-          git push origin main --force
+          poetry build
+          poetry publish --username __token__ --password $TO_PYPI

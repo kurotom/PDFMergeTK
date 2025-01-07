@@ -5,7 +5,12 @@ Icons for gui
 
 from pdfmergetk.pathclass import PathClass
 
-base = PathClass.dirname(PathClass.realpath(__file__))
+from pathlib import Path
+import sys
+
+base = Path(getattr(sys, '_MEIPASS', PathClass.dirname(PathClass.realpath(__file__)))).as_posix()
+
+# base = PathClass.dirname(PathClass.realpath(__file__))
 
 
 iconUP = PathClass.realpath(

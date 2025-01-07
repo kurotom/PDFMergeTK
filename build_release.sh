@@ -52,13 +52,6 @@ build_requirements () {
   status_get_exit_code
 }
 
-build_and_publish_package () {
-  echo -e "Build and Publish package to PyPi"
-  poetry --build publish
-
-  status_get_exit_code
-}
-
 git_new_tag () {
   # git create tag and push
   status_check_code
@@ -130,8 +123,6 @@ if [ $# -eq 1 ] || [ $# -eq 2 ]; then
     change_version_pyproject $NEW_VERSION_TAG
 
     build_requirements
-
-    build_and_publish_package
 
     git_push_changes_repository "$COMMIT_PUSH"
 

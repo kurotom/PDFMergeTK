@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pdfmergetk"
-version = "0.1.4"
+version = "0.1.5"
 description = "GUI application to easily merge PDF files with the power of Python."
 authors = ["kurotom <55354389+kurotom@users.noreply.github.com>"]
 license = "GPL-3.0-or-later"
@@ -29,7 +29,7 @@ winshell = {version = "*", markers = "sys_platform == 'win32'"}
 [tool.poetry.scripts]
 mergepdf = 'pdfmergetk.gui:main'
 mergepdfreset = 'pdfmergetk.reset:main'
-pdfmergetklinks = 'pdfmergetk.installer:main'
+mergepdflink = 'pdfmergetk.installer:main'
 
 [build-system]
 requires = ["poetry-core"]
